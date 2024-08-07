@@ -1,28 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// import "./sphincsplus.sol";
+import { SPHINCSPlus } from "./sphincsplus.sol";
 
 contract Verifier {
-    struct SPHINCS_PK {
-        bytes PKseed;  // 公開鍵のシード
-        bytes PKroot;  // 公開鍵のルート
+    SPHINCSPlus sphincsPlus;
+
+    constructor() {
+        sphincsPlus = new SPHINCSPlus();
     }
 
-    struct SPHINCS_SK {
-        bytes SKseed;  // 秘密鍵のシード
-        bytes SKprf;   // 秘密鍵PRF
-        bytes PKseed;  // 公開鍵のシード
-        bytes PKroot;  // 公開鍵のルート
-    }
-
-    struct SPHINCS_SIG {
-        bytes R;                    // 署名のランダム値
-        bytes SIG_FORS;             // FORS署名
-        bytes SIG_HT;               // ヒープツリー署名
-    }
-
-    function verify(bytes memory message, SPHINCS_SIG memory sig, SPHINCS_PK memory pk) public pure returns (bool) {
-
+    function verify(bytes memory message, SPHINCSPlus.SPHINCS_SIG memory sig, SPHINCSPlus.SPHINCS_PK memory pk) public pure returns (bool) {
+        SPHINCSPlus.Parameters memory params = sphincsPlus.MakeSphincsPlusSHA256256sSimple(false);
+        return sphincsPlus.Spx_verify(params, message, sig, pk);
     }
 }

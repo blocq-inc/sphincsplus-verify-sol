@@ -12,15 +12,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Node.jsのセットアップ
+      - name: setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: "18"
-      - name: 依存関係のインストール
+      - name: install dependencies
         run: npm ci
-      - name: コンパイル
-        run: npm run compile
-      - name: テスト実行
-        run: npm test
-      - name: リント実行
+      - name: lint
         run: npm run lint
+      - name: compile
+        run: npm run compile
+      - name: run test
+        run: npm test

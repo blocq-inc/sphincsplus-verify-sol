@@ -17,6 +17,13 @@ contract SPHINCSPlusVerifier {
     ) public view returns (bool) {
         SPHINCSPlus.Parameters memory params = sphincsPlus
             .MakeSphincsPlusSHA256256sSimple(false);
-        return sphincsPlus.Spx_verify(params, message, sig, pk);
+        SPHINCSPlus.VerificationParams memory vParams = SPHINCSPlus.VerificationParams({
+            params: params,
+            M: message,
+            SIG: sig,
+            PK: pk
+        });
+
+        return sphincsPlus.Spx_verify(vParams);
     }
 }

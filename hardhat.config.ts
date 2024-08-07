@@ -1,23 +1,39 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
+import "hardhat-gas-reporter";
 
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.24",
     settings: {
+      viaIR: true,
       optimizer: {
         enabled: true,
-        runs: 200,
+        details: {
+          yulDetails: {
+            optimizerSteps: "u:",
+          },
+        },
       },
-      //   contractSizer: {
-      //     alphaSort: true,
-      //     disambiguatePaths: false,
-      //     runOnCompile: true,
-      //     strict: true,
-      //     only: [":ERC20$"],
-      //   },
     },
+    // settings: {
+    //   optimizer: {
+    //     enabled: true,
+    //     runs: 200,
+    //   },
+  },
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: true,
+    only: [],
+  },
+  gasReporter: {
+    currency: "USD",
+    L1: "ethereum",
+    // coinmarketcap: "abc123...",
   },
 };
 

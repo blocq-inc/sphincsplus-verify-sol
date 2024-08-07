@@ -164,7 +164,7 @@ contract SPHINCSPlus {
         uint64 idx_tree,
         uint32 idx_leaf,
         bytes memory PKroot
-    ) internal view returns (bool) {
+    ) internal pure returns (bool) {
         bytes memory node = PK_FORS;
 
         for (uint i = 0; i < params.D; i++) {

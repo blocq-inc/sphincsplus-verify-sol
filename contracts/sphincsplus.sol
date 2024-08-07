@@ -96,7 +96,8 @@ contract SPHINCSPlus {
         bytes memory tmp_idx_tree = utils.slice(digest, tmp_md_bytes, tmp_idx_tree_bytes);
         bytes memory tmp_idx_leaf = utils.slice(digest, tmp_md_bytes + tmp_idx_tree_bytes, tmp_idx_leaf_bytes);
 
-        uint64 idx_tree = utils.bytesToUint64(tmp_idx_tree) & (type(uint64).max >> (64 - (params.H - params.H / params.D)));
+        uint64 idx_tree = utils.bytesToUint64(tmp_idx_tree) 
+            & (type(uint64).max >> (64 - (params.H - params.H / params.D)));
         uint32 idx_leaf = utils.bytesToUint32(tmp_idx_leaf) & (type(uint32).max >> (32 - params.H / params.D));
 
         // compute FORS public key
@@ -144,9 +145,9 @@ contract SPHINCSPlus {
 
             for (uint j = 0; j < params.A; j++) {
                 adrs.adrsType = j + 1;
-                node = abi.encodePacked(sha256(abi.encodePacked(PKseed, abi.encode(adrs), node, sig.AUTH[i * params.A + j])));
-                // adrs.adrsType = j + 1;
-                // node = sha256(abi.encodePacked(PKseed, adrs, node, sig.AUTH[i * params.A + j]));
+                node = abi.encodePacked(sha256(
+                    abi.encodePacked(PKseed, abi.encode(adrs), node, sig.AUTH[i * params.A + j])
+                    ));
             }
 
             result = abi.encodePacked(result, node);

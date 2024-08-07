@@ -2,7 +2,8 @@
 pragma solidity ^0.8.0;
 
 contract Utils {
-    function Hmsg(bytes memory R, bytes memory PKseed, bytes memory PKroot, bytes memory M) public pure returns (bytes memory) {
+    function Hmsg(bytes memory R, bytes memory PKseed, bytes memory PKroot, bytes memory M) 
+    public pure returns (bytes memory) {
         // Using sha256 for hashing
         return abi.encodePacked(sha256(abi.encodePacked(R, PKseed, PKroot, M)));
     }

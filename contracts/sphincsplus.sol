@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { Utils } from "./utils.sol";
+import {Utils} from "./utils.sol";
 
 contract SPHINCSPlus {
     Utils utils;
@@ -54,23 +54,26 @@ contract SPHINCSPlus {
         uint256 keyPairAddress;
     }
 
-    function MakeSphincsPlusSHA256256sSimple(bool RANDOMIZE) public pure returns (Parameters memory) {
-        return Parameters({
-            N: 32,
-            W: 16,
-            Hprime: 64,
-            H: 8,
-            D: 22,
-            K: 14,
-            T: 0, // This will be set later
-            LogT: 0, // This will be set later
-            A: 14,
-            RANDOMIZE: RANDOMIZE,
-            HashType: "SHA256-simple",
-            Len1: 0, // This will be set later
-            Len2: 0, // This will be set later
-            Len: 0 // This will be set later
-        });
+    function MakeSphincsPlusSHA256256sSimple(
+        bool RANDOMIZE
+    ) public pure returns (Parameters memory) {
+        return
+            Parameters({
+                N: 32,
+                W: 16,
+                Hprime: 64,
+                H: 8,
+                D: 22,
+                K: 14,
+                T: 0, // This will be set later
+                LogT: 0, // This will be set later
+                A: 14,
+                RANDOMIZE: RANDOMIZE,
+                HashType: "SHA256-simple",
+                Len1: 0, // This will be set later
+                Len2: 0, // This will be set later
+                Len: 0 // This will be set later
+            });
     }
 
     function Spx_verify(
@@ -93,12 +96,21 @@ contract SPHINCSPlus {
         uint tmp_idx_leaf_bytes = (params.H / params.D + 7) / 8;
 
         bytes memory tmp_md = utils.slice(digest, 0, tmp_md_bytes);
-        bytes memory tmp_idx_tree = utils.slice(digest, tmp_md_bytes, tmp_idx_tree_bytes);
-        bytes memory tmp_idx_leaf = utils.slice(digest, tmp_md_bytes + tmp_idx_tree_bytes, tmp_idx_leaf_bytes);
+        bytes memory tmp_idx_tree = utils.slice(
+            digest,
+            tmp_md_bytes,
+            tmp_idx_tree_bytes
+        );
+        bytes memory tmp_idx_leaf = utils.slice(
+            digest,
+            tmp_md_bytes + tmp_idx_tree_bytes,
+            tmp_idx_leaf_bytes
+        );
 
-        uint64 idx_tree = utils.bytesToUint64(tmp_idx_tree) 
-            & (type(uint64).max >> (64 - (params.H - params.H / params.D)));
-        uint32 idx_leaf = utils.bytesToUint32(tmp_idx_leaf) & (type(uint32).max >> (32 - params.H / params.D));
+        uint64 idx_tree = utils.bytesToUint64(tmp_idx_tree) &
+            (type(uint64).max >> (64 - (params.H - params.H / params.D)));
+        uint32 idx_leaf = utils.bytesToUint32(tmp_idx_leaf) &
+            (type(uint32).max >> (32 - params.H / params.D));
 
         // compute FORS public key
         adrs.layerAddress = 0;
@@ -109,12 +121,27 @@ contract SPHINCSPlus {
         bytes memory PKseed = PK.PKseed;
         bytes memory PKroot = PK.PKroot;
 
-        bytes memory PK_FORS = Fors_pkFromSig(params, SIG_FORS, tmp_md, PKseed, adrs);
+        bytes memory PK_FORS = Fors_pkFromSig(
+            params,
+            SIG_FORS,
+            tmp_md,
+            PKseed,
+            adrs
+        );
 
         // verify HT signature
         adrs.adrsType = 1; // TREE
 
-        return Ht_verify(params, PK_FORS, SIG_HT, PKseed, idx_tree, idx_leaf, PKroot);
+        return
+            Ht_verify(
+                params,
+                PK_FORS,
+                SIG_HT,
+                PKseed,
+                idx_tree,
+                idx_leaf,
+                PKroot
+            );
     }
 
     function Fors_pkFromSig(
@@ -135,8 +162,14 @@ contract SPHINCSPlus {
         for (uint i = 0; i < numIndices; i++) {
             uint startIdx = i * (params.A / 8);
             uint endIdx = startIdx + (params.A / 8);
-            bytes memory indexBytes = utils.slice(md, startIdx, endIdx - startIdx);
-            indices[i] = utils.bytesToUint32(indexBytes) & ((1 << params.A) - 1);
+            bytes memory indexBytes = utils.slice(
+                md,
+                startIdx,
+                endIdx - startIdx
+            );
+            indices[i] =
+                utils.bytesToUint32(indexBytes) &
+                ((1 << params.A) - 1);
         }
 
         for (uint i = 0; i < params.K; i++) {
@@ -145,9 +178,16 @@ contract SPHINCSPlus {
 
             for (uint j = 0; j < params.A; j++) {
                 adrs.adrsType = j + 1;
-                node = abi.encodePacked(sha256(
-                    abi.encodePacked(PKseed, abi.encode(adrs), node, sig.AUTH[i * params.A + j])
-                    ));
+                node = abi.encodePacked(
+                    sha256(
+                        abi.encodePacked(
+                            PKseed,
+                            abi.encode(adrs),
+                            node,
+                            sig.AUTH[i * params.A + j]
+                        )
+                    )
+                );
             }
 
             result = abi.encodePacked(result, node);
@@ -173,7 +213,16 @@ contract SPHINCSPlus {
             adrs.treeAddress = idx_tree;
             adrs.keyPairAddress = idx_leaf;
 
-            node = abi.encodePacked(sha256(abi.encodePacked(PKseed, abi.encode(adrs), node, sig.AUTH[i])));
+            node = abi.encodePacked(
+                sha256(
+                    abi.encodePacked(
+                        PKseed,
+                        abi.encode(adrs),
+                        node,
+                        sig.AUTH[i]
+                    )
+                )
+            );
 
             idx_tree >>= 1;
             idx_leaf >>= 1; // Moving up the tree level

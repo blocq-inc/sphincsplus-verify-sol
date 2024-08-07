@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { SPHINCSPlus } from "./sphincsplus.sol";
+import {SPHINCSPlus} from "./sphincsplus.sol";
 
 contract SPHINCSPlusVerifier {
     SPHINCSPlus sphincsPlus;
@@ -11,11 +11,12 @@ contract SPHINCSPlusVerifier {
     }
 
     function verify(
-        bytes memory message, 
+        bytes memory message,
         SPHINCSPlus.SPHINCS_SIG memory sig,
         SPHINCSPlus.SPHINCS_PK memory pk
-        ) public view returns (bool) {
-        SPHINCSPlus.Parameters memory params = sphincsPlus.MakeSphincsPlusSHA256256sSimple(false);
+    ) public view returns (bool) {
+        SPHINCSPlus.Parameters memory params = sphincsPlus
+            .MakeSphincsPlusSHA256256sSimple(false);
         return sphincsPlus.Spx_verify(params, message, sig, pk);
     }
 }

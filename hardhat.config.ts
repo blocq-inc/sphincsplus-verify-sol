@@ -17,11 +17,6 @@ const config: HardhatUserConfig = {
         },
       },
     },
-    // settings: {
-    //   optimizer: {
-    //     enabled: true,
-    //     runs: 200,
-    //   },
   },
   contractSizer: {
     alphaSort: true,
@@ -32,8 +27,6 @@ const config: HardhatUserConfig = {
   },
   gasReporter: {
     currency: "USD",
-    L1: "ethereum",
-    // coinmarketcap: "abc123...",
   },
 };
 

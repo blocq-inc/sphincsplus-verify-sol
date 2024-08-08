@@ -17,9 +17,18 @@ contract SHA256Tweak {
         uint256 N;
     }
 
-    function Hmsg(Sha256Tweak memory h, bytes memory R, bytes memory PKseed, bytes memory PKroot, bytes memory M) public pure returns (bytes memory) {
+    function Hmsg(
+        Sha256Tweak memory h,
+        bytes memory R,
+        bytes memory PKseed,
+        bytes memory PKroot,
+        bytes memory M
+    ) public pure returns (bytes memory) {
         bytes32 hash = sha256(abi.encodePacked(R, PKseed, PKroot, M));
-        bytes memory bitmask = mgf1sha256(abi.encodePacked(hash), h.MessageDigestLength);
+        bytes memory bitmask = mgf1sha256(
+            abi.encodePacked(hash),
+            h.MessageDigestLength
+        );
         return bitmask;
     }
 
@@ -34,8 +43,16 @@ contract SHA256Tweak {
     //     return hmac(sha256, SKprf, abi.encodePacked(OptRand, M))[:h.N];
     // }
 
-    function PRFmsg(Sha256Tweak memory h, bytes memory SKprf, bytes memory OptRand, bytes memory M) public view returns (bytes memory) {
-        bytes memory hmacResult = hmacSha256(SKprf, abi.encodePacked(OptRand, M));
+    function PRFmsg(
+        Sha256Tweak memory h,
+        bytes memory SKprf,
+        bytes memory OptRand,
+        bytes memory M
+    ) public view returns (bytes memory) {
+        bytes memory hmacResult = hmacSha256(
+            SKprf,
+            abi.encodePacked(OptRand, M)
+        );
         return utils.slice(hmacResult, 0, h.N);
     }
     // function PRFmsg(Sha256Tweak memory h, bytes memory SKprf, bytes memory OptRand, bytes memory M) public pure returns (bytes memory) {
@@ -46,32 +63,54 @@ contract SHA256Tweak {
     //     return utils.slice(hmacResult, 0, h.N);
     // }
 
-    function F(Sha256Tweak memory h, bytes memory PKseed, SPHINCSPlus.ADRS memory adrs, bytes memory tmp) public pure returns (bytes memory) {
+    function F(
+        Sha256Tweak memory h,
+        bytes memory PKseed,
+        SPHINCSPlus.ADRS memory adrs,
+        bytes memory tmp
+    ) public pure returns (bytes memory) {
         bytes memory compressedADRS = compressADRS(adrs);
         bytes memory M1;
 
         if (keccak256(bytes(h.Variant)) == keccak256("Robust")) {
-            bytes memory bitmask = mgf1sha256(abi.encodePacked(PKseed, compressedADRS), tmp.length);
+            bytes memory bitmask = mgf1sha256(
+                abi.encodePacked(PKseed, compressedADRS),
+                tmp.length
+            );
             M1 = xorBytes(tmp, bitmask);
         } else if (keccak256(bytes(h.Variant)) == keccak256("Simple")) {
             M1 = tmp;
         }
 
         bytes memory padding = new bytes(64 - h.N);
-        bytes32 hashValue = sha256(abi.encodePacked(PKseed, padding, compressedADRS, M1));
+        bytes32 hashValue = sha256(
+            abi.encodePacked(PKseed, padding, compressedADRS, M1)
+        );
         return abi.encodePacked(hashValue);
         // return sha256(abi.encodePacked(PKseed, padding, compressedADRS, M1));
     }
 
-    function H(Sha256Tweak memory h, bytes memory PKseed, SPHINCSPlus.ADRS memory adrs, bytes memory tmp) public pure returns (bytes memory) {
+    function H(
+        Sha256Tweak memory h,
+        bytes memory PKseed,
+        SPHINCSPlus.ADRS memory adrs,
+        bytes memory tmp
+    ) public pure returns (bytes memory) {
         return F(h, PKseed, adrs, tmp);
     }
 
-    function T_l(Sha256Tweak memory h, bytes memory PKseed, SPHINCSPlus.ADRS memory adrs, bytes memory tmp) public pure returns (bytes memory) {
+    function T_l(
+        Sha256Tweak memory h,
+        bytes memory PKseed,
+        SPHINCSPlus.ADRS memory adrs,
+        bytes memory tmp
+    ) public pure returns (bytes memory) {
         return F(h, PKseed, adrs, tmp);
     }
 
-    function compressADRS(SPHINCSPlus.ADRS memory adrs) public pure returns (bytes memory) {
+    function compressADRS(
+        SPHINCSPlus.ADRS memory adrs
+    ) public pure returns (bytes memory) {
         bytes memory ADRSc = new bytes(22);
 
         ADRSc[0] = bytes1(uint8(adrs.layerAddress >> 24));
@@ -90,10 +129,14 @@ contract SHA256Tweak {
 
         if (adrs.adrsType == 0) {
             for (uint i = 0; i < 4; i++) {
-                ADRSc[16 + i] = bytes1(uint8(adrs.keyPairAddress >> (24 - 8 * i)));
+                ADRSc[16 + i] = bytes1(
+                    uint8(adrs.keyPairAddress >> (24 - 8 * i))
+                );
             }
             for (uint i = 0; i < 4; i++) {
-                ADRSc[20 + i] = bytes1(uint8(adrs.chainAddress >> (24 - 8 * i)));
+                ADRSc[20 + i] = bytes1(
+                    uint8(adrs.chainAddress >> (24 - 8 * i))
+                );
             }
         } else if (adrs.adrsType == 1) {
             for (uint i = 0; i < 4; i++) {
@@ -107,7 +150,10 @@ contract SHA256Tweak {
         return ADRSc;
     }
 
-    function mgf1sha256(bytes memory seed, uint length) public pure returns (bytes memory) {
+    function mgf1sha256(
+        bytes memory seed,
+        uint length
+    ) public pure returns (bytes memory) {
         bytes memory T;
         uint counter = 0;
 
@@ -124,7 +170,10 @@ contract SHA256Tweak {
         return result;
     }
 
-    function xorBytes(bytes memory a, bytes memory b) public pure returns (bytes memory) {
+    function xorBytes(
+        bytes memory a,
+        bytes memory b
+    ) public pure returns (bytes memory) {
         require(a.length == b.length, "Input lengths must match");
         bytes memory result = new bytes(a.length);
 
@@ -135,7 +184,10 @@ contract SHA256Tweak {
         return result;
     }
 
-    function hmacSha256(bytes memory key, bytes memory data) public pure returns (bytes memory) {
+    function hmacSha256(
+        bytes memory key,
+        bytes memory data
+    ) public pure returns (bytes memory) {
         bytes memory o_key_pad = new bytes(64);
         bytes memory i_key_pad = new bytes(64);
 

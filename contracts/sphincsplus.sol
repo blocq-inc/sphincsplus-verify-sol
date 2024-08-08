@@ -59,7 +59,7 @@ contract SPHINCSPlus {
         uint256 hashAddress;
         uint256 adrsType;
         uint256 keyPairAddress;
-        uint256 chainAddress; 
+        uint256 chainAddress;
         uint256 treeHeight;
         uint256 treeIndex;
     }
@@ -308,15 +308,21 @@ contract SPHINCSPlus {
         ADRS memory adrs
     ) internal view returns (bytes memory) {
         // Set address type to WOTS_HASH and set key pair address
-        adrs.adrsType = 0;  // Assuming 0 is the address type for WOTS_HASH
+        adrs.adrsType = 0; // Assuming 0 is the address type for WOTS_HASH
         adrs.keyPairAddress = idx;
 
         // Compute WOTS+ pk from WOTS+ sig
-        bytes memory node0 = WOTS_pkFromSig(params, SIG_XMSS.wotsSig, M, PKseed, adrs);
+        bytes memory node0 = WOTS_pkFromSig(
+            params,
+            SIG_XMSS.wotsSig,
+            M,
+            PKseed,
+            adrs
+        );
         bytes memory node1;
 
         // Set address type to TREE and set tree index
-        adrs.adrsType = 1;  // Assuming 1 is the address type for TREE
+        adrs.adrsType = 1; // Assuming 1 is the address type for TREE
         adrs.treeIndex = idx;
 
         // Compute root from WOTS+ pk and AUTH
@@ -325,11 +331,29 @@ contract SPHINCSPlus {
             if ((idx / (2 ** k)) % 2 == 0) {
                 adrs.treeIndex = adrs.treeIndex / 2;
 
-                node1 = utils.sha256ToBytes(sha256(abi.encodePacked(PKseed, utils.adrsToBytes(adrs), node0, utils.slice(SIG_XMSS.auth, k * params.N, params.N))));
+                node1 = utils.sha256ToBytes(
+                    sha256(
+                        abi.encodePacked(
+                            PKseed,
+                            utils.adrsToBytes(adrs),
+                            node0,
+                            utils.slice(SIG_XMSS.auth, k * params.N, params.N)
+                        )
+                    )
+                );
             } else {
                 adrs.treeIndex = (adrs.treeIndex - 1) / 2;
 
-                node1 = utils.sha256ToBytes(sha256(abi.encodePacked(PKseed, utils.adrsToBytes(adrs), utils.slice(SIG_XMSS.auth, k * params.N, params.N), node0)));
+                node1 = utils.sha256ToBytes(
+                    sha256(
+                        abi.encodePacked(
+                            PKseed,
+                            utils.adrsToBytes(adrs),
+                            utils.slice(SIG_XMSS.auth, k * params.N, params.N),
+                            node0
+                        )
+                    )
+                );
             }
             node0 = node1;
         }
@@ -357,20 +381,30 @@ contract SPHINCSPlus {
         }
 
         csum <<= (8 - ((params.Len2 * utils.log2(params.W)) % 8));
-        uint256 len2_bytes = (params.Len2 * utils.log2(params.W) + 7) / 8;  // Equivalent to math.Ceil
-        _msg = abi.encodePacked(_msg, utils.base_w(utils.toBytes(csum, len2_bytes), params.W, params.Len2));
+        uint256 len2_bytes = (params.Len2 * utils.log2(params.W) + 7) / 8; // Equivalent to math.Ceil
+        _msg = abi.encodePacked(
+            _msg,
+            utils.base_w(utils.toBytes(csum, len2_bytes), params.W, params.Len2)
+        );
 
         bytes memory tmp = new bytes(params.Len * params.N);
 
         for (uint256 i = 0; i < params.Len; i++) {
             adrs.chainAddress = uint32(i);
-            bytes memory result = utils.chain(params, utils.slice(signature, i * params.N, params.N), uint8(_msg[i]), uint8(params.W - 1 - uint8(_msg[i])), PKseed, adrs);
+            bytes memory result = utils.chain(
+                params,
+                utils.slice(signature, i * params.N, params.N),
+                uint8(_msg[i]),
+                uint8(params.W - 1 - uint8(_msg[i])),
+                PKseed,
+                adrs
+            );
             for (uint256 j = 0; j < params.N; j++) {
                 tmp[i * params.N + j] = result[j];
             }
         }
 
-        wotspkADRS.adrsType = 2;  // Assuming 2 is the address type for WOTS_PK
+        wotspkADRS.adrsType = 2; // Assuming 2 is the address type for WOTS_PK
         wotspkADRS.keyPairAddress = adrs.keyPairAddress;
 
         return utils.T_l(PKseed, wotspkADRS, tmp);

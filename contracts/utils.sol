@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { SPHINCSPlus } from "./sphincsplus.sol";
+import {SPHINCSPlus} from "./sphincsplus.sol";
 
 contract Utils {
     function Hmsg(
@@ -26,7 +26,7 @@ contract Utils {
         return result;
     }
 
-  function base_w(
+    function base_w(
         bytes memory input,
         uint256 w,
         uint256 outputLength
@@ -55,14 +55,19 @@ contract Utils {
             }
 
             bitsInBuffer -= log_w;
-            result[outPos] = bytes1(uint8((bitBuffer >> bitsInBuffer) & (w - 1)));
+            result[outPos] = bytes1(
+                uint8((bitBuffer >> bitsInBuffer) & (w - 1))
+            );
             outPos++;
         }
 
         return result;
     }
 
-    function toBytes(uint256 x, uint256 length) public pure returns (bytes memory) {
+    function toBytes(
+        uint256 x,
+        uint256 length
+    ) public pure returns (bytes memory) {
         bytes memory result = new bytes(length);
         for (uint256 i = 0; i < length; i++) {
             result[i] = bytes1(uint8(x >> (8 * (length - 1 - i))));
@@ -108,7 +113,9 @@ contract Utils {
         return result;
     }
 
-    function adrsToBytes(SPHINCSPlus.ADRS memory adrs) public pure returns (bytes memory) {
+    function adrsToBytes(
+        SPHINCSPlus.ADRS memory adrs
+    ) public pure returns (bytes memory) {
         bytes memory result = new bytes(32);
         // Fill in the bytes as per the ADRS structure fields
         result[0] = bytes1(uint8(adrs.layerAddress >> 24));
@@ -157,7 +164,9 @@ contract Utils {
 
         for (uint8 i = start; i < (start + steps) && i < params.W; i++) {
             adrs.hashAddress = uint32(i);
-            result = sha256ToBytes(sha256(abi.encodePacked(PKseed, adrsToBytes(adrs), result)));
+            result = sha256ToBytes(
+                sha256(abi.encodePacked(PKseed, adrsToBytes(adrs), result))
+            );
         }
 
         return result;
@@ -168,6 +177,9 @@ contract Utils {
         SPHINCSPlus.ADRS memory adrs,
         bytes memory tmp
     ) public view returns (bytes memory) {
-        return sha256ToBytes(sha256(abi.encodePacked(PKseed, adrsToBytes(adrs), tmp)));
+        return
+            sha256ToBytes(
+                sha256(abi.encodePacked(PKseed, adrsToBytes(adrs), tmp))
+            );
     }
 }

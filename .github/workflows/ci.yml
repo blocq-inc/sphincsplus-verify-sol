@@ -22,5 +22,7 @@ jobs:
         run: npm run lint
       - name: compile
         run: npm run compile
+      - name: typechain
+        run: npm run types
       - name: run test
         run: npm test

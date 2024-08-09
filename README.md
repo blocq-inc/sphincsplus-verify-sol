@@ -1,13 +1,18 @@
-# Sample Hardhat Project
+# SPHINCS+ signature verification for solidity
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+## About
 
-Try running some of the following tasks:
+- SPHINCS+
 
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.ts
+## How to use
+
+```bash
+npm install
+```
+
+```bash
+npm test
+npm run compile
+npm run types 
+npm run deploy
 ```

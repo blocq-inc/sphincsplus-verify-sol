@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {SPHINCSPlus} from "../sphincsplus.sol";
+import {SpxParameters} from "../parameters.sol";
 
 interface ITweakableHashFunction {
     function Hmsg(
@@ -39,4 +40,13 @@ interface ITweakableHashFunction {
         SPHINCSPlus.ADRS memory adrs,
         bytes memory tmp
     ) external pure returns (bytes memory);
+
+    function chain(
+        SpxParameters.Parameters memory params,
+        bytes memory input,
+        uint8 start,
+        uint8 steps,
+        bytes memory PKseed,
+        SPHINCSPlus.ADRS memory adrs
+    ) external view returns (bytes memory); 
 }

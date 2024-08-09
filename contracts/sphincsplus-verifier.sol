@@ -2,18 +2,21 @@
 pragma solidity ^0.8.0;
 
 import {Utils} from "./utils.sol";
+import {SpxParameters} from "./parameters.sol";
 import {SHA256Tweak} from "./tweakable-hash/sha256.sol";
 import {SPHINCSPlus} from "./sphincsplus.sol";
+import "hardhat/console.sol";
 
 contract SPHINCSPlusVerifier {
     SPHINCSPlus sphincsPlus;
     Utils utils;
+    SpxParameters spxParams;
     SHA256Tweak sha256Tweak;
 
     constructor() {
-        utils = new Utils();
-        sha256Tweak = new SHA256Tweak(address(utils));
-        sphincsPlus = new SPHINCSPlus(address(sha256Tweak), address(utils));
+        spxParams = new SpxParameters(address(utils));
+        utils = new Utils(address(spxParams));
+        sha256Tweak = new SHA256Tweak(address(utils), "SHA256", 32, 32);
     }
 
     // TODO: params should bytes for all args
@@ -56,11 +59,12 @@ contract SPHINCSPlusVerifier {
         SPHINCSPlus.SPHINCS_SIG memory sig,
         SPHINCSPlus.SPHINCS_PK memory pk
     ) public view returns (bool) {
-        SPHINCSPlus.Parameters memory params = sphincsPlus
-            .MakeSphincsPlusSHA256256sSimple(false);
+        SpxParameters params = spxParams.MakeSphincsPlusSHA256256sSimple(false);
+
         SPHINCSPlus.VerificationParams memory vParams = SPHINCSPlus
             .VerificationParams({params: params, M: message, SIG: sig, PK: pk});
 
+        console.log("verify");
         return sphincsPlus.Spx_verify(vParams);
     }
 }

@@ -3,34 +3,19 @@ pragma solidity ^0.8.0;
 
 import {Utils} from "./utils.sol";
 import {ITweakableHashFunction} from "./tweakable-hash/itweakable.sol";
+import {SpxParameters} from "./parameters.sol";
 import {SHA256Tweak} from "./tweakable-hash/sha256.sol";
+import "hardhat/console.sol";
 
 contract SPHINCSPlus {
     Utils utils;
     ITweakableHashFunction tweakableHashFunction;
+    SpxParameters spxParams;
 
-    constructor(address _tweakableHashFunction, address _utils) {
+    constructor(address _tweakableHashFunction, address _utils, address _spxParams) {
         utils = Utils(_utils);
         tweakableHashFunction = ITweakableHashFunction(_tweakableHashFunction);
-    }
-
-    struct Parameters {
-        uint256 N;
-        uint256 W;
-        uint256 Hprime;
-        uint256 H;
-        uint256 D;
-        uint256 K;
-        uint256 T;
-        uint256 LogT;
-        uint256 A;
-        bool RANDOMIZE;
-        // TODO: HashType to Tweak
-        // Tweak     tweakable.TweakableHashFunction
-        string HashType;
-        uint256 Len1;
-        uint256 Len2;
-        uint256 Len ;
+        spxParams = SpxParameters(_spxParams);
     }
 
     struct SPHINCS_PK {
@@ -75,7 +60,7 @@ contract SPHINCSPlus {
     }
 
     struct VerificationParams {
-        Parameters params;
+        SpxParameters.Parameters params;
         bytes M;
         SPHINCS_SIG SIG;
         SPHINCS_PK PK;
@@ -84,7 +69,7 @@ contract SPHINCSPlus {
     function calculateIndexes(
         bytes memory tmp_idx_tree,
         bytes memory tmp_idx_leaf,
-        Parameters memory params
+        SpxParameters.Parameters memory params
     ) internal view returns (IndexResult memory) {
         IndexResult memory result;
         result.idx_tree =
@@ -101,9 +86,9 @@ contract SPHINCSPlus {
         bytes memory PKseed,
         bytes memory PKroot,
         bytes memory M,
-        Parameters memory params
+        SpxParameters.Parameters memory params
     ) internal view returns (bytes memory, IndexResult memory) {
-        bytes memory digest = utils.Hmsg(R, PKseed, PKroot, M);
+        bytes memory digest = tweakableHashFunction.Hmsg(R, PKseed, PKroot, M);
 
         uint tmp_md_bytes = (params.K * params.A + 7) / 8;
         uint tmp_idx_tree_bytes = (params.H - params.H / params.D + 7) / 8;
@@ -133,12 +118,15 @@ contract SPHINCSPlus {
     function Spx_verify(
         VerificationParams memory vParams
     ) public view returns (bool) {
+        console.log("Spx_verify");
+        console.log("Spx_verify:init");
         // init
         ADRS memory adrs;
         bytes memory R = vParams.SIG.R;
         FORSSignature memory SIG_FORS = vParams.SIG.SIG_FORS;
         HTSignature memory SIG_HT = vParams.SIG.SIG_HT;
 
+        console.log("Spx_verify:computeIndexes");
         // compute message digest and index
         (bytes memory tmp_md, IndexResult memory indexes) = computeIndexes(
             R,
@@ -162,6 +150,7 @@ contract SPHINCSPlus {
         bytes memory PKseed = vParams.PK.PKseed;
         bytes memory PKroot = vParams.PK.PKroot;
 
+        console.log("Spx_verify:ForS_pkFromSig:start");
         bytes memory PK_FORS = Fors_pkFromSig(
             vParams.params,
             SIG_FORS,
@@ -169,11 +158,12 @@ contract SPHINCSPlus {
             PKseed,
             adrs
         );
+        console.log("Spx_verify:ForS_pkFromSig:end");
 
         // verify HT signature
-        // adrs.adrsType = 1; // TREE
         adrs.adrsType = bytes4(0x00000001); // TREE
 
+        console.log("Spx_verify:Ht_verify");
         return
             Ht_verify(
                 vParams.params,
@@ -186,84 +176,14 @@ contract SPHINCSPlus {
             );
     }
 
-    function MakeSphincsPlusSHA256256sSimple(
-        bool RANDOMIZE
-    ) public pure returns (Parameters memory) {
-        return
-            Parameters({
-                N: 32,
-                W: 16,
-                Hprime: 64,
-                H: 8,
-                D: 22,
-                K: 14,
-                T: 0, // This will be set later
-                LogT: 0, // This will be set later
-                A: 14,
-                RANDOMIZE: RANDOMIZE,
-                HashType: "SHA256-simple",
-                Len1: 0, // This will be set later
-                Len2: 0, // This will be set later
-                Len: 0 // This will be set later
-            });
-    }
+    // TODO: write a function to create a SPHINCS+ instance
+    // ref: https://github.com/kasperdi/SPHINCSPLUS-golang/blob/c93d01211cb38fad0af614fe3e2c2579ff6c03f4/parameters/parameters.go#L110-L111
+    // function MakeSPhincsPlus() public pure returns (Parameters memory) {
 
-    // function Fors_pkFromSig(
-    //     Parameters memory params,
-    //     FORSSignature memory sig,
-    //     bytes memory md,
-    //     bytes memory PKseed,
-    //     ADRS memory adrs
-    // ) internal view returns (bytes memory) {
-    //     bytes memory node;
-    //     bytes memory result;
-
-    //     // md is the message digest from which we derive the indices
-    //     uint numIndices = params.K;
-    //     uint[] memory indices = new uint[](numIndices);
-
-    //     // Convert md to indices
-    //     for (uint i = 0; i < numIndices; i++) {
-    //         uint startIdx = i * (params.A / 8);
-    //         uint endIdx = startIdx + (params.A / 8);
-    //         bytes memory indexBytes = utils.slice(
-    //             md,
-    //             startIdx,
-    //             endIdx - startIdx
-    //         );
-    //         indices[i] =
-    //             utils.bytesToUint32(indexBytes) &
-    //             ((1 << params.A) - 1);
-    //     }
-
-    //     for (uint i = 0; i < params.K; i++) {
-    //         adrs.treeAddress = bytes12(uint96(i));
-    //         // adrs.treeAddress = i;
-    //         node = sig.SK[i];
-
-    //         for (uint j = 0; j < params.A; j++) {
-    //             // adrs.adrsType = j + 1;
-    //             adrs.adrsType = bytes4(uint32(j + 1));
-    //             node = abi.encodePacked(
-    //                 sha256(
-    //                     abi.encodePacked(
-    //                         PKseed,
-    //                         utils.adrsToBytes(adrs),
-    //                         node,
-    //                         sig.AUTH[i * params.A + j]
-    //                     )
-    //                 )
-    //             );
-    //         }
-
-    //         result = abi.encodePacked(result, node);
-    //     }
-
-    //     return result;
     // }
 
     function Fors_pkFromSig(
-        Parameters memory params,
+        SpxParameters.Parameters memory params,
         FORSSignature memory sig,
         bytes memory md,
         bytes memory PKseed,
@@ -281,16 +201,21 @@ contract SPHINCSPlus {
             indices[i] = utils.bytesToUint32(indexBytes) & ((1 << params.A) - 1);
         }
 
+        console.log("Fors_pkFromSig:before for loop1");
         for (uint i = 0; i < params.K; i++) {
             node0 = sig.SK[i];
 
             adrs.treeHeight = bytes4(0);
             adrs.treeIndex = bytes4(uint32(i * params.T + indices[i]));
 
+            console.log("Fors_pkFromSig:before F");
             node0 = tweakableHashFunction.F(PKseed, adrs, node0);
+            console.log("Fors_pkFromSig:after F");
 
             bytes memory auth = sig.AUTH[i];
             adrs.treeIndex = bytes4(uint32(i * params.T + indices[i]));
+
+            console.log("Fors_pkFromSig:before for loop2");
             for (uint j = 0; j < params.A; j++) {
                 adrs.treeHeight = bytes4(uint32(j + 1));
 
@@ -330,7 +255,8 @@ contract SPHINCSPlus {
                 node0 = node1;
             }
 
-            // 計算されたルートを結果に追加
+            console.log("Fors_pkFromSig:before for loop3");
+
             for (uint k = 0; k < params.N; k++) {
                 root[i * params.N + k] = node0[k];
             }
@@ -339,11 +265,12 @@ contract SPHINCSPlus {
         adrs.adrsType = bytes4(uint32(2)); // address.FORS_ROOTS
         adrs.keyPairAddress = adrs.keyPairAddress;
 
+        console.log("Fors_pkFromSig:T_l");
         return tweakableHashFunction.T_l(PKseed, adrs, root);
     }
 
     function Ht_verify(
-        Parameters memory params,
+        SpxParameters.Parameters memory params,
         bytes memory M,
         HTSignature memory sig,
         bytes memory PKseed,
@@ -393,7 +320,7 @@ contract SPHINCSPlus {
     }
 
     function Xmss_pkFromSig(
-        Parameters memory params,
+        SpxParameters.Parameters memory params,
         uint32 idx,
         XMSSSignature memory SIG_XMSS,
         bytes memory M,
@@ -484,7 +411,7 @@ contract SPHINCSPlus {
     }
 
     function WOTS_pkFromSig(
-        Parameters memory params,
+        SpxParameters.Parameters memory params,
         bytes memory signature,
         bytes memory message,
         bytes memory PKseed,
@@ -514,7 +441,7 @@ contract SPHINCSPlus {
 
         for (uint256 i = 0; i < params.Len; i++) {
             adrs.chainAddress = bytes4(uint32(i));
-            bytes memory result = utils.chain(
+            bytes memory result = tweakableHashFunction.chain(
                 params,
                 utils.slice(signature, i * params.N, params.N),
                 uint8(_msg[i]),
@@ -530,6 +457,6 @@ contract SPHINCSPlus {
         wotspkADRS.adrsType = bytes4(uint32(2)); // Assuming 2 is the address type for WOTS_PK
         wotspkADRS.keyPairAddress = adrs.keyPairAddress;
 
-        return utils.T_l(PKseed, wotspkADRS, tmp);
+        return tweakableHashFunction.T_l(PKseed, wotspkADRS, tmp);
     }
 }

@@ -2,7 +2,9 @@
 
 ## About
 
-- SPHINCS+
+- `SPHINCS+` signature scheme verification logic implementation in solidity.
+ - Based on Golang implementation of SPHINCS+ signature scheme.
+    - https://github.com/kasperdi/SPHINCSPLUS-golang
 
 ## How to use
 
@@ -11,8 +13,12 @@ npm install
 ```
 
 ```bash
-npm test
-npm run compile
 npm run types 
+npm run compile
+npm test
 npm run deploy
 ```
+
+## TODO
+
+[ ] use of abi.encode(abi.encodePacked) should be considered.

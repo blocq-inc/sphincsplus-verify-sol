@@ -159,7 +159,7 @@ contract Utils {
         uint8 steps,
         bytes memory PKseed,
         SPHINCSPlus.ADRS memory adrs
-    ) public view returns (bytes memory) {
+    ) public pure returns (bytes memory) {
         bytes memory result = input;
 
         for (uint8 i = start; i < (start + steps) && i < params.W; i++) {
@@ -176,7 +176,7 @@ contract Utils {
         bytes memory PKseed,
         SPHINCSPlus.ADRS memory adrs,
         bytes memory tmp
-    ) public view returns (bytes memory) {
+    ) public pure returns (bytes memory) {
         return
             sha256ToBytes(
                 sha256(abi.encodePacked(PKseed, adrsToBytes(adrs), tmp))

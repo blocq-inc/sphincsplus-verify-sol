@@ -44,7 +44,6 @@ contract SPHINCSPlus {
     }
 
     struct HTSignature {
-        bytes[] AUTH;
         XMSSSignature[] xmssSigs;
     }
 
@@ -54,14 +53,22 @@ contract SPHINCSPlus {
     }
 
     struct ADRS {
-        uint256 layerAddress;
-        uint256 treeAddress;
-        uint256 hashAddress;
-        uint256 adrsType;
-        uint256 keyPairAddress;
-        uint256 chainAddress;
-        uint256 treeHeight;
-        uint256 treeIndex;
+        uint layerAddress;
+        uint treeAddress;
+        uint hashAddress;
+        uint adrsType;
+        uint keyPairAddress;
+        uint chainAddress;
+        uint treeHeight;
+        uint treeIndex;
+        // bytes4 layerAddress;
+        // bytes12 treeAddress;
+        // bytes4 hashAddress;
+        // bytes4 adrsType;
+        // bytes4 keyPairAddress;
+        // bytes4 chainAddress;
+        // bytes4 treeHeight;
+        // bytes4 treeIndex;
     }
 
     struct IndexResult {

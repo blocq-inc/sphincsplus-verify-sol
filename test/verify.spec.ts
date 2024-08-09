@@ -1,105 +1,126 @@
-// import {
-//   time,
-//   loadFixture,
-// } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-// import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
-// import { expect } from "chai";
-// import hre from "hardhat";
-
-// async function deploySPHINCSPlusVerifierFixture() {
-//   const SPHINCSPlusVerifierFactory = await hre.ethers.getContractFactory(
-//     "SPHINCSPlusVerifier"
-//   );
-//   const verifier = await SPHINCSPlusVerifierFactory.deploy();
-
-//   return { verifier };
-// }
-
-// describe("SPHINCSPlusVerifier", function () {
-//   // We define a fixture to reuse the same setup in every test.
-//   // We use loadFixture to run this setup once, snapshot that state,
-//   // and reset Hardhat Network to that snapshot in every test.
-//   async function deploySPHINCSPlusVerifierFixture() {
-//     // Contracts are deployed using the first signer/account by default
-//     const [owner, otherAccount] = await hre.ethers.getSigners();
-
-//     const SPHINCSPlusVerifier = await hre.ethers.getContractFactory(
-//       "SPHINCSPlusVerifier"
-//     );
-//     const verifier = await SPHINCSPlusVerifier.deploy();
-
-//     return { verifier, owner, otherAccount };
-//   }
-
-//   describe("Deployment", function () {
-//     it("Should deploy correctly", async function () {
-//       const { verifier } = await loadFixture(deploySPHINCSPlusVerifierFixture);
-
-//       expect(verifier.target).to.be.properAddress;
-//     });
-//   });
-
-//   describe("Verification", function () {
-//     it("Should verify a correct signature", async function () {
-//       const { verifier } = await loadFixture(deploySPHINCSPlusVerifierFixture);
-
-//       // Prepare test data
-//       const message = hre.ethers.toUtf8Bytes("Test message");
-//       const sig = {
-//         R: hre.ethers.randomBytes(32),
-//         SIG_FORS: {
-//           SK: [hre.ethers.randomBytes(32)],
-//           AUTH: [hre.ethers.randomBytes(32)],
-//         },
-//         SIG_HT: {
-//           AUTH: [hre.ethers.randomBytes(32)],
-//         },
-//       };
-//       const pk = {
-//         PKseed: hre.ethers.randomBytes(32),
-//         PKroot: hre.ethers.randomBytes(32),
-//       };
-
-//       // Execute verification
-//       const result = await verifier.verify(message, sig, pk);
-
-//       // Check the result
-//       expect(result).to.be.true;
-//     });
-
-//     it("Should reject an invalid signature", async function () {
-//       const { verifier } = await loadFixture(deploySPHINCSPlusVerifierFixture);
-
-//       // Prepare test data (invalid signature)
-//       const message = hre.ethers.toUtf8Bytes("Test message");
-//       const sig = {
-//         R: hre.ethers.randomBytes(32),
-//         SIG_FORS: {
-//           SK: [hre.ethers.randomBytes(32)],
-//           AUTH: [hre.ethers.randomBytes(32)],
-//         },
-//         SIG_HT: {
-//           AUTH: [hre.ethers.randomBytes(32)],
-//         },
-//       };
-//       const pk = {
-//         PKseed: hre.ethers.randomBytes(32),
-//         PKroot: hre.ethers.randomBytes(32),
-//       };
-
-//       // Execute verification
-//       const result = await verifier.verify(message, sig, pk);
-
-//       // Check the result
-//       expect(result).to.be.false;
-//     });
-//   });
-// });
-
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 import hre from "hardhat";
-import { SPHINCSPlusVerifier } from "../typechain-types";
+import { SPHINCSPlus } from "../typechain-types";
+
+const message = Buffer.from("Hello, World!", "utf-8");
+
+const pk: SPHINCSPlus.SPHINCS_PKStruct = {
+  PKseed: Buffer.from("8553e3c2aa3b9683cfb734a2a7ce7645", "hex"),
+  PKroot: Buffer.from("90b01cf975df4e0f8bd3d4383cf9d3ac", "hex"),
+};
+
+const validSignature: SPHINCSPlus.SPHINCS_SIGStruct = {
+  R: Buffer.from("7f0feb685882587e743d4249b56416fb", "hex"),
+  SIG_FORS: {
+    AUTH: [
+      "6293bbbe91e2216393de16b70e4362df3e494c5cda4f2839a93da602f0cf1199ffd88719c4221bc764d0c277f090759f2b746f91a23fec8ef9331e5b34aaf48b087533309183505781b85ab77e3d34b9c5e7a5cd4e7252fb79e3583fee719b7797d958044b3519b9624d1702c8f44cf5c61605a77fb4abcf979b718004c13c66dca648f322b7f46ef14a96c40d918aed920f38afba9d1ab69f65d9ea28b73d6e0f60dd91e511046dfe5e32ef34e8c100a7d141bcc37d0259d3c99c661c342130",
+      "881beb81bc7e74debe0ab1f13092806205d747d3e658c485e4e51b9b13725d3778016c62dfc455d1686039eef6db2b3e254387a81cec99fe08b40de500a6fc047f0f51fef7bf266e3c397047856e441ae4c8ed09f125d3e65510d065b32b12f6c5cbaf599d74ebb1eddf320bdd8f8eee27f9d2c0aa95520802d64568a7e98cdc7f2937b98de5775e19216e79aecca4205df6ddc2fd5608560e1aa5ff9b871b306b44cb1cfdef8d0dd3fc6dd0de2bc02736432ee5f688294ead017f233f5badf0",
+      "2d14b76c5ec2c76183d4e077b16ebd096280a9b6dcf1c5546cebc4762da023edc1ad9a946cb39dd443ffcc73c449bb87de014b0118d9ef0ae0a0b04e72c07ade150d12fed724ed88f2ed834a4afe95a47f1e4b2841a97c0b748b2108ce834b2ac6b2b8775cbcbfc0663fc54427070098c4db77192dbdf38f19017c1625fc31930c4f0f3d372fcd55133975b2866dcdef5d3733fe3c7b59e8583ae8ffee86944ce7a3479aad268de7ae1fcd700e9b28c90ec5799b20b3b4f64b79e3c214fb29a9",
+      "273f94477381a07e13a309a486c605628f7b6116c7f5e68f114efe179fde00718a4231fd1691fcacfc50611fb7ebe1d718bfd8bca7385a3a29609b3a9692847c86821d66294cd0d8b77874e04b32008f0f8f7f977d07a12af3497815586cd2d7b473380db12374369a4e532df040aad70e552ee10c072eced1c7e55465ebc672261d3fddc23c16e6a6a661d00f76f6ec13d397a8c4a4538e84741b76e6942c6b15d9a887d6e33fa2fc69cb5e4db4fbe2092020a462e1fe869ff3990b80746977",
+      "a4a1b919f926ba26a71534d38b93d8825ebc132037fa6bb11b16a958695b37ef7892dfea192f435efc71cbf05317891d3fdc055156d6ea3eee39d49b50c75755943a813eec1cecd68b657606d5e2c43cb45ac68977aca5cdc4eda21ac2ebb8829711122268e1ce4abb5fe5dd6d3bf47806153db9b240039b5ffa4f389a65a9900aacb4971b790a38065af1fdd298c383942dbe8a04a2924a5aed54e9fc583ed6b33d4b62ed971f5dffecf6e657028af4c0390e523e84fc4ab6f0dc389a8f0983",
+      "b043780cd7f9a572691831c28d055910a8dc980a78b848e44991432d3dcd98723f294442033692e3b48001c85758cde25dedb95a4203230c37724d211d5be738960f23f021b764c827c43bd1ae5e0652813c7161bb23032622a43c9d456c7a9d92332a9ff3f06f4d580f03fa577e5b2166c442a6626331be7fff0d51cbb0a1a37d323b58f61af1762b3cabfcb10cdf064fa94964ab25b580e6b4e8d222e5e72cf284cb5018854899d4be94042daefadcb7402ae7cfe6eca24609748b52d96a2d",
+      "ca77e4744020260c5c0d8a31527384936568ebb695d9ec66f96f4dd09ec60bc92953f904d337dc63309923a4a536051324d13cfe3e2a54f4ac9137668cf54f4de765cbac13f338c4cfa38372ff05d3ce51569ec38cc05ca91472797ec493b67aa9d3c0bb6483ed08d3a38197b38505fba47f99bbeadb2085b63d14a2ff214eac1096778e6702a20dfa2a41bd4614ede368776a2c0155c3017355209f9544344db82f5ef7d6c6a01ba74eccf272e13b9b5af5c5aaeeb8688054167f24a2f1f484",
+      "61e870049992f26cb38c4cae733e60216edf222f2df9f47516ce1773d7bb69efdcd857ad0643b1e12e7562388fecc2270126c5700a7ef434afd973997760c2bf698c87f1253d40e23a1f343e8457169be682019ccf5a267f4f4ed671e31371471834ffe4c65006f1249e21d63b4fcaa07a82b5db0e37c7c2b7b0c4c0dcba10e585be18440fb461d4cddc0e1520e107e0550ee4687910194b69b5ab705196889c23b8eeaca0c68da36d7e69efff1c80f0022438a16b1ed3ec786d22ba17d6ecbf",
+      "5a89e27e049b7719c73de11f86cd5fa9dd28d7b71525f0261d14582b1fde7b979f853e6b8f37f914c21298a5b51be5401e1426a9e394894b02e740d9127d4dada5d1e5d875f358029fa58887144e2e881c06b9932f6061dca53a039ff0d7bbe3732150735242bdbc7fd8cb3fe590177c34142bd7ecd42b10b43dc1b3821803f19b74c2ec529de65e9d0c059d71dc0ab34fa79d2706652d7cec03a1eaa19a85f34503b2279a538deeb7c3cfc264b5daa6ce743249e8fc1ab59c7642eaf0cadafe",
+      "4f6057e73b79b9efac75191e4ea4761226c246e2e81a7a329b653d6aed00941e139eb23a35aa827e4e51839c662092993485c92326363a1931bb40df5e551e6be6417c21f2150cb7605da28868c8ca7e55ad5c9c47994323be48509eeabf7ea1ab394a62e96f5bf8a23886ee202132a5fdb813ef268f0bddc471ce5d66b9e9bccea5ea1a9314f0a792587d0bdde3da856cf5b0e2ba9ddd09f1569f274837d2bb04e7340a26edf8109634aedc1161e45fd9f81d07ce381207d3990beb0d66ee6d",
+      "fc2f970d0a459fe9a937e25c1c8ee77d74fe6bd692936790717f4c4d6bc3b84a9b61c28584b1d6750c490227ff6969f30a8a1b76d37d1dd3e3d2c56530c117c206643d1fb469b53629e93ca81bab4befb44892c822fa9dd0a42e17f8e5776fbbd85bec31145b932c7a9eabff67e583f350044a37fb2ff129fc655aba4f9d4c0ceb3eb0ed027c932e05d887972e60f2f60230b14d2ba9eb3b2b6be9a17a67ddc4180655f85ca707c1baaba8237b9ac5aa91abfba61f953ea28ed87ceead7b252c",
+      "a4532357e07af53fbcb0e54c7456af255e2b1d587b8de2171e9653226d9c34d46bcfcc0b6d20ce57734bff9d4fd384221324e7d792555a54cd45d0782a66e49b8294317466b2ef0cfac9eebf5b328fd5c2d3acd9c7c2aaf7500fece0b879337ba09dd136570c46f30890ddcffeb6788e13121c93f379e18a809a858fda8d55cebedc3253a9163f58575bcb709c5b0d1bb54dfa03176442e1d7fa4064125ec6c7dfcffabcc438bc870c879005ca0b6102b748ee0485278d7079f228953d687080",
+      "9143950e4ec448d1dfcefc314faa8a139d9379419bde7e193fc321cd89215879bcd54adbbad9189e103de516198978fa40ee439ee5a6b5cd08752c4565743d14b649025992c9f6a73ee6ed5ab0863648c480e984e7b255fccd2c99f7fafebed878074df882a174a12b7e190c0d074636608955e3c017163a00f92cc88eb990ef1c0a1a1261e01be2000a78fa3e1450ad6d38e28d562a0f5ff3d129d361bf5ade34218725ada7229f5d10ce42cab3660fc12602155f3941b865ae372b5c0d060a",
+      "90df2410e8272f05c4f3ed9ea4739643fb40c8dbe7aae28945e4b7f2577f78cd71ce98455b26f0cb157473620c22c76675ef410d8417070bfd51e8804f0863d0db1d79a7f2fb828ec2e27af345a3421c26e9577b85b8f2a44f630a84a715c33fd87b04b02b318268491ef6303693c153092e154469448711f206c8a5c2c70ee0c2ace7192a814ebd075d39b82872db6aed4d5f2c66c5916e5606dc13c05ed37f8acdcd6affadd5fa03216c62a35ffbcd172df352cb3ce4f52758a74625d2e8e3",
+    ].map((v) => Buffer.from(v, "hex")),
+    SK: [
+      "43a1a083fc22fb9518a7329cef90d042",
+      "3d7b75270a72face5f875b59b82da540",
+      "1d0b4eda4b6eba5f3b6b37211593a9b3",
+      "5e700b467d6deec535ee8d68d6f15c4e",
+      "1b838df3fe62b789ad017c1bcc74e315",
+      "68f3714d5c894daba32e173b4534cc6f",
+      "e8a2f8eb3aa99d6486462d05cc9140da",
+      "cc87625fbc88758e9f08b8800e9606a0",
+      "f0dc669c127f8c5f5b6df8611fff64c8",
+      "b56343cefa044ed211dc70727048fe68",
+      "27823f76ac0b97ff5a18e65a15bf3e6f",
+      "65f33838ce854a2b60ab653bfff94d91",
+      "42e572d0e74493120ddf162172d9e8cd",
+      "76ec80e4ec77d72c30f767264cee802d",
+    ].map((v) => Buffer.from(v, "hex")),
+  },
+  SIG_HT: {
+    xmssSigs: [
+      {
+        auth: Buffer.from(
+          "1492ce3645bcd9d5203dc447bde5bfb7c683a7e754c3ab6cbe5eb27e1de59ab9e61fea20e22cb768f6b5069f56aa57d9f15e8104580ecf96d1858d38d3386ff6ca9ec3dbce86f6df5b49a913d860fb4c247dfe1ba5fc6350990a3babfc91d6855e56a05895a13789b29a32c7428d202f8bdf373dd4fe887d3c4faf082416c112d93b3c6a1083dd2b08552e0690371d09",
+          "hex"
+        ),
+        wotsSig: Buffer.from(
+          "229a02a92b5a17ad726549c111f97a36026817f37f561b3d39960fa24fd7e828d3126b4a484c247c49b394001e05bc6a28b425f3a542e357fcb2624a6a0fc140642e68793925a7c6a6fd80c9e8e456ea592f9a8092c913e48636a36156eedd99b6d04fb53d90a4e473f2617a0e21e3223c94c981cc2565103640dacfe854fa721e19a8bccd77db2f9d0b6d221708a41053f76ab09631aa20d64f5b454ee04ba74f563fff2b155659ffd296d843ea468899ea2d9155dbb3189648368e4a8f72800ab99cb267129af2d079d46a7474c60a1e13f858a7aa68bf437a52fc1913c98c6464876db4ba1a517c852d296d91b7b884d13d3ad04196425c305729b78f82b4eff15ccc82c44e8bed582e96c244b546ba74cef1719490bc1a3a3750887b876abd7a0050889c3a8618082d69e6ec54c25a282d5febfdca1327ec1c25eae780d1792a5f69fd98e3fc117123835da36f6e925a2ae7fcc668ccc69cdbb23da20c98416a9228d865cc99bc189e4f5c31da6bba863e85afb13fda2b846a4b987604de66d8d17d5c8b0d9f0aac3e3bdce96b492c8bb0ddbaa4fb17ca1748a60f3ba3613009ee1c98cfc2e59f136ad9a2f1cffc9ba54a63c7f20314e83b20862aed986613081e910a05bf3140cdf0b5084afc64d0762c137e99c027053290c2f8fb5af37df6c1b93b9a6d6cafb5a17a533db830b6077c593728db8dca71df70d3d863a96bf8f4835a1fe63f0a5367f75532e0ba603477b702b4be2c4fb078e6539413229d69bc232bc05b7d57e10d14fc21c765",
+          "hex"
+        ),
+      },
+      {
+        auth: Buffer.from(
+          "1492ce3645bcd9d5203dc447bde5bfb7c683a7e754c3ab6cbe5eb27e1de59ab9e61fea20e22cb768f6b5069f56aa57d9f15e8104580ecf96d1858d38d3386ff6ca9ec3dbce86f6df5b49a913d860fb4c247dfe1ba5fc6350990a3babfc91d6855e56a05895a13789b29a32c7428d202f8bdf373dd4fe887d3c4faf082416c112d93b3c6a1083dd2b08552e0690371d09",
+          "hex"
+        ),
+        wotsSig: Buffer.from(
+          "229a02a92b5a17ad726549c111f97a36026817f37f561b3d39960fa24fd7e828d3126b4a484c247c49b394001e05bc6a28b425f3a542e357fcb2624a6a0fc140642e68793925a7c6a6fd80c9e8e456ea592f9a8092c913e48636a36156eedd99b6d04fb53d90a4e473f2617a0e21e3223c94c981cc2565103640dacfe854fa721e19a8bccd77db2f9d0b6d221708a41053f76ab09631aa20d64f5b454ee04ba74f563fff2b155659ffd296d843ea468899ea2d9155dbb3189648368e4a8f72800ab99cb267129af2d079d46a7474c60a1e13f858a7aa68bf437a52fc1913c98c6464876db4ba1a517c852d296d91b7b884d13d3ad04196425c305729b78f82b4eff15ccc82c44e8bed582e96c244b546ba74cef1719490bc1a3a3750887b876abd7a0050889c3a8618082d69e6ec54c25a282d5febfdca1327ec1c25eae780d1792a5f69fd98e3fc117123835da36f6e925a2ae7fcc668ccc69cdbb23da20c98416a9228d865cc99bc189e4f5c31da6bba863e85afb13fda2b846a4b987604de66d8d17d5c8b0d9f0aac3e3bdce96b492c8bb0ddbaa4fb17ca1748a60f3ba3613009ee1c98cfc2e59f136ad9a2f1cffc9ba54a63c7f20314e83b20862aed986613081e910a05bf3140cdf0b5084afc64d0762c137e99c027053290c2f8fb5af37df6c1b93b9a6d6cafb5a17a533db830b6077c593728db8dca71df70d3d863a96bf8f4835a1fe63f0a5367f75532e0ba603477b702b4be2c4fb078e6539413229d69bc232bc05b7d57e10d14fc21c765",
+          "hex"
+        ),
+      },
+      {
+        auth: Buffer.from(
+          "1492ce3645bcd9d5203dc447bde5bfb7c683a7e754c3ab6cbe5eb27e1de59ab9e61fea20e22cb768f6b5069f56aa57d9f15e8104580ecf96d1858d38d3386ff6ca9ec3dbce86f6df5b49a913d860fb4c247dfe1ba5fc6350990a3babfc91d6855e56a05895a13789b29a32c7428d202f8bdf373dd4fe887d3c4faf082416c112d93b3c6a1083dd2b08552e0690371d09",
+          "hex"
+        ),
+        wotsSig: Buffer.from(
+          "229a02a92b5a17ad726549c111f97a36026817f37f561b3d39960fa24fd7e828d3126b4a484c247c49b394001e05bc6a28b425f3a542e357fcb2624a6a0fc140642e68793925a7c6a6fd80c9e8e456ea592f9a8092c913e48636a36156eedd99b6d04fb53d90a4e473f2617a0e21e3223c94c981cc2565103640dacfe854fa721e19a8bccd77db2f9d0b6d221708a41053f76ab09631aa20d64f5b454ee04ba74f563fff2b155659ffd296d843ea468899ea2d9155dbb3189648368e4a8f72800ab99cb267129af2d079d46a7474c60a1e13f858a7aa68bf437a52fc1913c98c6464876db4ba1a517c852d296d91b7b884d13d3ad04196425c305729b78f82b4eff15ccc82c44e8bed582e96c244b546ba74cef1719490bc1a3a3750887b876abd7a0050889c3a8618082d69e6ec54c25a282d5febfdca1327ec1c25eae780d1792a5f69fd98e3fc117123835da36f6e925a2ae7fcc668ccc69cdbb23da20c98416a9228d865cc99bc189e4f5c31da6bba863e85afb13fda2b846a4b987604de66d8d17d5c8b0d9f0aac3e3bdce96b492c8bb0ddbaa4fb17ca1748a60f3ba3613009ee1c98cfc2e59f136ad9a2f1cffc9ba54a63c7f20314e83b20862aed986613081e910a05bf3140cdf0b5084afc64d0762c137e99c027053290c2f8fb5af37df6c1b93b9a6d6cafb5a17a533db830b6077c593728db8dca71df70d3d863a96bf8f4835a1fe63f0a5367f75532e0ba603477b702b4be2c4fb078e6539413229d69bc232bc05b7d57e10d14fc21c765",
+          "hex"
+        ),
+      },
+      {
+        auth: Buffer.from(
+          "1492ce3645bcd9d5203dc447bde5bfb7c683a7e754c3ab6cbe5eb27e1de59ab9e61fea20e22cb768f6b5069f56aa57d9f15e8104580ecf96d1858d38d3386ff6ca9ec3dbce86f6df5b49a913d860fb4c247dfe1ba5fc6350990a3babfc91d6855e56a05895a13789b29a32c7428d202f8bdf373dd4fe887d3c4faf082416c112d93b3c6a1083dd2b08552e0690371d09",
+          "hex"
+        ),
+        wotsSig: Buffer.from(
+          "229a02a92b5a17ad726549c111f97a36026817f37f561b3d39960fa24fd7e828d3126b4a484c247c49b394001e05bc6a28b425f3a542e357fcb2624a6a0fc140642e68793925a7c6a6fd80c9e8e456ea592f9a8092c913e48636a36156eedd99b6d04fb53d90a4e473f2617a0e21e3223c94c981cc2565103640dacfe854fa721e19a8bccd77db2f9d0b6d221708a41053f76ab09631aa20d64f5b454ee04ba74f563fff2b155659ffd296d843ea468899ea2d9155dbb3189648368e4a8f72800ab99cb267129af2d079d46a7474c60a1e13f858a7aa68bf437a52fc1913c98c6464876db4ba1a517c852d296d91b7b884d13d3ad04196425c305729b78f82b4eff15ccc82c44e8bed582e96c244b546ba74cef1719490bc1a3a3750887b876abd7a0050889c3a8618082d69e6ec54c25a282d5febfdca1327ec1c25eae780d1792a5f69fd98e3fc117123835da36f6e925a2ae7fcc668ccc69cdbb23da20c98416a9228d865cc99bc189e4f5c31da6bba863e85afb13fda2b846a4b987604de66d8d17d5c8b0d9f0aac3e3bdce96b492c8bb0ddbaa4fb17ca1748a60f3ba3613009ee1c98cfc2e59f136ad9a2f1cffc9ba54a63c7f20314e83b20862aed986613081e910a05bf3140cdf0b5084afc64d0762c137e99c027053290c2f8fb5af37df6c1b93b9a6d6cafb5a17a533db830b6077c593728db8dca71df70d3d863a96bf8f4835a1fe63f0a5367f75532e0ba603477b702b4be2c4fb078e6539413229d69bc232bc05b7d57e10d14fc21c765",
+          "hex"
+        ),
+      },
+      {
+        auth: Buffer.from(
+          "1492ce3645bcd9d5203dc447bde5bfb7c683a7e754c3ab6cbe5eb27e1de59ab9e61fea20e22cb768f6b5069f56aa57d9f15e8104580ecf96d1858d38d3386ff6ca9ec3dbce86f6df5b49a913d860fb4c247dfe1ba5fc6350990a3babfc91d6855e56a05895a13789b29a32c7428d202f8bdf373dd4fe887d3c4faf082416c112d93b3c6a1083dd2b08552e0690371d09",
+          "hex"
+        ),
+        wotsSig: Buffer.from(
+          "229a02a92b5a17ad726549c111f97a36026817f37f561b3d39960fa24fd7e828d3126b4a484c247c49b394001e05bc6a28b425f3a542e357fcb2624a6a0fc140642e68793925a7c6a6fd80c9e8e456ea592f9a8092c913e48636a36156eedd99b6d04fb53d90a4e473f2617a0e21e3223c94c981cc2565103640dacfe854fa721e19a8bccd77db2f9d0b6d221708a41053f76ab09631aa20d64f5b454ee04ba74f563fff2b155659ffd296d843ea468899ea2d9155dbb3189648368e4a8f72800ab99cb267129af2d079d46a7474c60a1e13f858a7aa68bf437a52fc1913c98c6464876db4ba1a517c852d296d91b7b884d13d3ad04196425c305729b78f82b4eff15ccc82c44e8bed582e96c244b546ba74cef1719490bc1a3a3750887b876abd7a0050889c3a8618082d69e6ec54c25a282d5febfdca1327ec1c25eae780d1792a5f69fd98e3fc117123835da36f6e925a2ae7fcc668ccc69cdbb23da20c98416a9228d865cc99bc189e4f5c31da6bba863e85afb13fda2b846a4b987604de66d8d17d5c8b0d9f0aac3e3bdce96b492c8bb0ddbaa4fb17ca1748a60f3ba3613009ee1c98cfc2e59f136ad9a2f1cffc9ba54a63c7f20314e83b20862aed986613081e910a05bf3140cdf0b5084afc64d0762c137e99c027053290c2f8fb5af37df6c1b93b9a6d6cafb5a17a533db830b6077c593728db8dca71df70d3d863a96bf8f4835a1fe63f0a5367f75532e0ba603477b702b4be2c4fb078e6539413229d69bc232bc05b7d57e10d14fc21c765",
+          "hex"
+        ),
+      },
+      {
+        auth: Buffer.from(
+          "1492ce3645bcd9d5203dc447bde5bfb7c683a7e754c3ab6cbe5eb27e1de59ab9e61fea20e22cb768f6b5069f56aa57d9f15e8104580ecf96d1858d38d3386ff6ca9ec3dbce86f6df5b49a913d860fb4c247dfe1ba5fc6350990a3babfc91d6855e56a05895a13789b29a32c7428d202f8bdf373dd4fe887d3c4faf082416c112d93b3c6a1083dd2b08552e0690371d09",
+          "hex"
+        ),
+        wotsSig: Buffer.from(
+          "229a02a92b5a17ad726549c111f97a36026817f37f561b3d39960fa24fd7e828d3126b4a484c247c49b394001e05bc6a28b425f3a542e357fcb2624a6a0fc140642e68793925a7c6a6fd80c9e8e456ea592f9a8092c913e48636a36156eedd99b6d04fb53d90a4e473f2617a0e21e3223c94c981cc2565103640dacfe854fa721e19a8bccd77db2f9d0b6d221708a41053f76ab09631aa20d64f5b454ee04ba74f563fff2b155659ffd296d843ea468899ea2d9155dbb3189648368e4a8f72800ab99cb267129af2d079d46a7474c60a1e13f858a7aa68bf437a52fc1913c98c6464876db4ba1a517c852d296d91b7b884d13d3ad04196425c305729b78f82b4eff15ccc82c44e8bed582e96c244b546ba74cef1719490bc1a3a3750887b876abd7a0050889c3a8618082d69e6ec54c25a282d5febfdca1327ec1c25eae780d1792a5f69fd98e3fc117123835da36f6e925a2ae7fcc668ccc69cdbb23da20c98416a9228d865cc99bc189e4f5c31da6bba863e85afb13fda2b846a4b987604de66d8d17d5c8b0d9f0aac3e3bdce96b492c8bb0ddbaa4fb17ca1748a60f3ba3613009ee1c98cfc2e59f136ad9a2f1cffc9ba54a63c7f20314e83b20862aed986613081e910a05bf3140cdf0b5084afc64d0762c137e99c027053290c2f8fb5af37df6c1b93b9a6d6cafb5a17a533db830b6077c593728db8dca71df70d3d863a96bf8f4835a1fe63f0a5367f75532e0ba603477b702b4be2c4fb078e6539413229d69bc232bc05b7d57e10d14fc21c765",
+          "hex"
+        ),
+      },
+      {
+        auth: Buffer.from(
+          "1492ce3645bcd9d5203dc447bde5bfb7c683a7e754c3ab6cbe5eb27e1de59ab9e61fea20e22cb768f6b5069f56aa57d9f15e8104580ecf96d1858d38d3386ff6ca9ec3dbce86f6df5b49a913d860fb4c247dfe1ba5fc6350990a3babfc91d6855e56a05895a13789b29a32c7428d202f8bdf373dd4fe887d3c4faf082416c112d93b3c6a1083dd2b08552e0690371d09",
+          "hex"
+        ),
+        wotsSig: Buffer.from(
+          "229a02a92b5a17ad726549c111f97a36026817f37f561b3d39960fa24fd7e828d3126b4a484c247c49b394001e05bc6a28b425f3a542e357fcb2624a6a0fc140642e68793925a7c6a6fd80c9e8e456ea592f9a8092c913e48636a36156eedd99b6d04fb53d90a4e473f2617a0e21e3223c94c981cc2565103640dacfe854fa721e19a8bccd77db2f9d0b6d221708a41053f76ab09631aa20d64f5b454ee04ba74f563fff2b155659ffd296d843ea468899ea2d9155dbb3189648368e4a8f72800ab99cb267129af2d079d46a7474c60a1e13f858a7aa68bf437a52fc1913c98c6464876db4ba1a517c852d296d91b7b884d13d3ad04196425c305729b78f82b4eff15ccc82c44e8bed582e96c244b546ba74cef1719490bc1a3a3750887b876abd7a0050889c3a8618082d69e6ec54c25a282d5febfdca1327ec1c25eae780d1792a5f69fd98e3fc117123835da36f6e925a2ae7fcc668ccc69cdbb23da20c98416a9228d865cc99bc189e4f5c31da6bba863e85afb13fda2b846a4b987604de66d8d17d5c8b0d9f0aac3e3bdce96b492c8bb0ddbaa4fb17ca1748a60f3ba3613009ee1c98cfc2e59f136ad9a2f1cffc9ba54a63c7f20314e83b20862aed986613081e910a05bf3140cdf0b5084afc64d0762c137e99c027053290c2f8fb5af37df6c1b93b9a6d6cafb5a17a533db830b6077c593728db8dca71df70d3d863a96bf8f4835a1fe63f0a5367f75532e0ba603477b702b4be2c4fb078e6539413229d69bc232bc05b7d57e10d14fc21c765",
+          "hex"
+        ),
+      },
+    ],
+  },
+};
 
 async function deploySPHINCSPlusVerifierFixture() {
   // Contracts are deployed using the first signer/account by default
@@ -123,96 +144,21 @@ describe("SPHINCSPlusVerifier", function () {
   });
 
   describe("Verification", function () {
-    // it("Should verify a correct signature", async function () {
-    //   const { verifier } = await loadFixture(deploySPHINCSPlusVerifierFixture);
+    it("Should verify a correct signature", async function () {
+      const { verifier } = await loadFixture(deploySPHINCSPlusVerifierFixture);
 
-    //   // Prepare test data
-    //   const message = hre.ethers.toUtf8Bytes("Test message");
-    //   const sig = {
-    //     R: hre.ethers.randomBytes(32),
-    //     SIG_FORS: {
-    //       SK: [hre.ethers.randomBytes(32)],
-    //       AUTH: [hre.ethers.randomBytes(32)],
-    //     },
-    //     SIG_HT: {
-    //       AUTH: [hre.ethers.randomBytes(32)],
-    //     },
-    //   };
-    //   const pk = {
-    //     PKseed: hre.ethers.randomBytes(32),
-    //     PKroot: hre.ethers.randomBytes(32),
-    //   };
+      // Execute verification
+      const result = await verifier.verify(message, validSignature, pk);
 
-    //   // Execute verification
-    //   const result = await verifier.verify(message, sig, pk);
-
-    //   // Check the result
-    //   expect(result).to.be.true;
-    // });
+      // Check the result
+      expect(result).to.be.true;
+    });
 
     it("Should reject an invalid signature:1", async function () {
       const { verifier } = await loadFixture(deploySPHINCSPlusVerifierFixture);
 
-      // Prepare test data (invalid signature)
-      const message = hre.ethers.toUtf8Bytes("Test message");
-      const sig = {
-        R: hre.ethers.randomBytes(32),
-        SIG_FORS: {
-          SK: [hre.ethers.randomBytes(32)],
-          AUTH: [hre.ethers.randomBytes(32)],
-        },
-        SIG_HT: {
-          AUTH: [hre.ethers.randomBytes(32)],
-        },
-      };
-      const pk = {
-        PKseed: hre.ethers.randomBytes(32),
-        PKroot: hre.ethers.randomBytes(32),
-      };
-
       // Execute verification
-      const result = await verifier.verify(message, sig, pk);
-
-      // Check the result
-      expect(result).to.be.false;
-    });
-
-    it("Should reject an invalid signature:2", async function () {
-      const { verifier } = await deploySPHINCSPlusVerifierFixture();
-
-      // Prepare test data (invalid signature)
-      const message = hre.ethers.toUtf8Bytes("Test message for SPHINCS+");
-      const sig = {
-        R: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-        SIG_FORS: {
-          SK: [
-            "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
-          ],
-          AUTH: [
-            "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
-          ],
-        },
-        SIG_HT: {
-          AUTH: [
-            "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
-          ],
-        },
-      };
-      const pk = {
-        PKseed:
-          "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
-        PKroot:
-          "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
-      };
-
-      // Estimate gas cost
-      const gasEstimate = await (
-        verifier as SPHINCSPlusVerifier
-      ).estimateGas.verify(message, sig, pk);
-      console.log("Estimated Gas Cost: ", gasEstimate.toString());
-
-      // Execute verification
-      const result = await verifier.verify(message, sig, pk);
+      const result = await verifier.verify(message, validSignature, pk);
 
       // Check the result
       expect(result).to.be.false;

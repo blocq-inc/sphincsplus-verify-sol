@@ -2,12 +2,16 @@
 pragma solidity ^0.8.0;
 
 import {Utils} from "./utils.sol";
+import {ITweakableHashFunction} from "./tweakable-hash/itweakable.sol";
+import {SHA256Tweak} from "./tweakable-hash/sha256.sol";
 
 contract SPHINCSPlus {
     Utils utils;
+    ITweakableHashFunction tweakableHashFunction;
 
-    constructor() {
-        utils = new Utils();
+    constructor(address _tweakableHashFunction, address _utils) {
+        utils = Utils(_utils);
+        tweakableHashFunction = ITweakableHashFunction(_tweakableHashFunction);
     }
 
     struct Parameters {
@@ -21,10 +25,12 @@ contract SPHINCSPlus {
         uint256 LogT;
         uint256 A;
         bool RANDOMIZE;
+        // TODO: HashType to Tweak
+        // Tweak     tweakable.TweakableHashFunction
         string HashType;
         uint256 Len1;
         uint256 Len2;
-        uint256 Len;
+        uint256 Len ;
     }
 
     struct SPHINCS_PK {
@@ -53,22 +59,14 @@ contract SPHINCSPlus {
     }
 
     struct ADRS {
-        uint layerAddress;
-        uint treeAddress;
-        uint hashAddress;
-        uint adrsType;
-        uint keyPairAddress;
-        uint chainAddress;
-        uint treeHeight;
-        uint treeIndex;
-        // bytes4 layerAddress;
-        // bytes12 treeAddress;
-        // bytes4 hashAddress;
-        // bytes4 adrsType;
-        // bytes4 keyPairAddress;
-        // bytes4 chainAddress;
-        // bytes4 treeHeight;
-        // bytes4 treeIndex;
+        bytes4 layerAddress;
+        bytes12 treeAddress;
+        bytes4 hashAddress;
+        bytes4 adrsType;
+        bytes4 keyPairAddress;
+        bytes4 chainAddress;
+        bytes4 treeHeight;
+        bytes4 treeIndex;
     }
 
     struct IndexResult {
@@ -155,9 +153,11 @@ contract SPHINCSPlus {
 
         // compute FORS public key
         adrs.layerAddress = 0;
-        adrs.treeAddress = idx_tree;
+        // adrs.treeAddress = idx_tree;
+        adrs.treeAddress = bytes12(uint96(idx_tree));
         adrs.adrsType = 0; // FORS_TREE
-        adrs.keyPairAddress = idx_leaf;
+        adrs.keyPairAddress = bytes4(idx_leaf);
+        // adrs.keyPairAddress = idx_leaf;
 
         bytes memory PKseed = vParams.PK.PKseed;
         bytes memory PKroot = vParams.PK.PKroot;
@@ -171,7 +171,8 @@ contract SPHINCSPlus {
         );
 
         // verify HT signature
-        adrs.adrsType = 1; // TREE
+        // adrs.adrsType = 1; // TREE
+        adrs.adrsType = bytes4(0x00000001); // TREE
 
         return
             Ht_verify(
@@ -207,6 +208,60 @@ contract SPHINCSPlus {
             });
     }
 
+    // function Fors_pkFromSig(
+    //     Parameters memory params,
+    //     FORSSignature memory sig,
+    //     bytes memory md,
+    //     bytes memory PKseed,
+    //     ADRS memory adrs
+    // ) internal view returns (bytes memory) {
+    //     bytes memory node;
+    //     bytes memory result;
+
+    //     // md is the message digest from which we derive the indices
+    //     uint numIndices = params.K;
+    //     uint[] memory indices = new uint[](numIndices);
+
+    //     // Convert md to indices
+    //     for (uint i = 0; i < numIndices; i++) {
+    //         uint startIdx = i * (params.A / 8);
+    //         uint endIdx = startIdx + (params.A / 8);
+    //         bytes memory indexBytes = utils.slice(
+    //             md,
+    //             startIdx,
+    //             endIdx - startIdx
+    //         );
+    //         indices[i] =
+    //             utils.bytesToUint32(indexBytes) &
+    //             ((1 << params.A) - 1);
+    //     }
+
+    //     for (uint i = 0; i < params.K; i++) {
+    //         adrs.treeAddress = bytes12(uint96(i));
+    //         // adrs.treeAddress = i;
+    //         node = sig.SK[i];
+
+    //         for (uint j = 0; j < params.A; j++) {
+    //             // adrs.adrsType = j + 1;
+    //             adrs.adrsType = bytes4(uint32(j + 1));
+    //             node = abi.encodePacked(
+    //                 sha256(
+    //                     abi.encodePacked(
+    //                         PKseed,
+    //                         utils.adrsToBytes(adrs),
+    //                         node,
+    //                         sig.AUTH[i * params.A + j]
+    //                     )
+    //                 )
+    //             );
+    //         }
+
+    //         result = abi.encodePacked(result, node);
+    //     }
+
+    //     return result;
+    // }
+
     function Fors_pkFromSig(
         Parameters memory params,
         FORSSignature memory sig,
@@ -214,49 +269,77 @@ contract SPHINCSPlus {
         bytes memory PKseed,
         ADRS memory adrs
     ) internal view returns (bytes memory) {
-        bytes memory node;
-        bytes memory result;
-
-        // md is the message digest from which we derive the indices
-        uint numIndices = params.K;
-        uint[] memory indices = new uint[](numIndices);
-
-        // Convert md to indices
-        for (uint i = 0; i < numIndices; i++) {
+        bytes memory node0;
+        bytes memory node1;
+        bytes memory root = new bytes(params.K * params.N);
+        
+        uint[] memory indices = new uint[](params.K);
+        for (uint i = 0; i < params.K; i++) {
             uint startIdx = i * (params.A / 8);
             uint endIdx = startIdx + (params.A / 8);
-            bytes memory indexBytes = utils.slice(
-                md,
-                startIdx,
-                endIdx - startIdx
-            );
-            indices[i] =
-                utils.bytesToUint32(indexBytes) &
-                ((1 << params.A) - 1);
+            bytes memory indexBytes = utils.slice(md, startIdx, endIdx - startIdx);
+            indices[i] = utils.bytesToUint32(indexBytes) & ((1 << params.A) - 1);
         }
 
         for (uint i = 0; i < params.K; i++) {
-            adrs.treeAddress = i;
-            node = sig.SK[i];
+            node0 = sig.SK[i];
 
+            adrs.treeHeight = bytes4(0);
+            adrs.treeIndex = bytes4(uint32(i * params.T + indices[i]));
+
+            node0 = tweakableHashFunction.F(PKseed, adrs, node0);
+
+            bytes memory auth = sig.AUTH[i];
+            adrs.treeIndex = bytes4(uint32(i * params.T + indices[i]));
             for (uint j = 0; j < params.A; j++) {
-                adrs.adrsType = j + 1;
-                node = abi.encodePacked(
-                    sha256(
-                        abi.encodePacked(
-                            PKseed,
-                            utils.adrsToBytes(adrs),
-                            node,
-                            sig.AUTH[i * params.A + j]
-                        )
-                    )
-                );
+                adrs.treeHeight = bytes4(uint32(j + 1));
+
+                if ((indices[i] / (2 ** j)) % 2 == 0) {
+                    adrs.treeIndex = bytes4(uint32(uint32(adrs.treeIndex) / 2));
+
+                    bytes memory bytesToHash = new bytes(params.N + node0.length);
+
+                    // Copy auth[j*params.N:(j+1)*params.N] to the beginning of bytesToHash
+                    for (uint k = 0; k < params.N; k++) {
+                        bytesToHash[i] = auth[j * params.N + i];
+                    }
+
+                    // Copy node0 to the end of bytesToHash
+                    for (uint l = 0; l < node0.length; l++) {
+                        bytesToHash[params.N + i] = node0[i];
+                    }
+                    // node1 = tweakableHashFunction.H(PKseed, adrs, abi.encodePacked(node0, auth[j * params.N:(j + 1) * params.N]));
+                    node1 = tweakableHashFunction.H(PKseed, adrs, bytesToHash);
+                } else {
+                    adrs.treeIndex = bytes4(uint32((uint32(adrs.treeIndex) - 1) / 2));
+
+                    bytes memory bytesToHash = new bytes(params.N + node0.length);
+
+                    // Copy auth[j*params.N:(j+1)*params.N] to the beginning of bytesToHash
+                    for (uint k = 0; k < params.N; k++) {
+                        bytesToHash[i] = auth[j * params.N + i];
+                    }
+
+                    // Copy node0 to the end of bytesToHash
+                    for (uint l = 0; l < node0.length; l++) {
+                        bytesToHash[params.N + i] = node0[i];
+                    }
+                    node1 = tweakableHashFunction.H(PKseed, adrs, bytesToHash);
+                }
+
+                node0 = node1;
             }
 
-            result = abi.encodePacked(result, node);
+            // 計算されたルートを結果に追加
+            for (uint k = 0; k < params.N; k++) {
+                root[i * params.N + k] = node0[k];
+            }
         }
 
-        return result;
+        adrs.adrsType = bytes4(uint32(2)); // address.FORS_ROOTS
+        adrs.keyPairAddress = adrs.keyPairAddress;
+
+        return tweakableHashFunction.T_l(PKseed, adrs, root);
     }
 
     function Ht_verify(
@@ -272,7 +355,8 @@ contract SPHINCSPlus {
 
         // Initialize address
         adrs.layerAddress = 0;
-        adrs.treeAddress = idx_tree;
+        adrs.treeAddress = bytes12(uint96(idx_tree));
+        // adrs.treeAddress = idx_tree;
 
         // Verify the first XMSS signature
         XMSSSignature memory SIG_tmp = sig.xmssSigs[0];
@@ -291,8 +375,10 @@ contract SPHINCSPlus {
             idx_tree = idx_tree >> (params.H / params.D);
 
             SIG_tmp = sig.xmssSigs[j];
-            adrs.layerAddress = j;
-            adrs.treeAddress = idx_tree;
+            adrs.layerAddress = bytes4(uint32(j));
+            // adrs.layerAddress = j;
+            // adrs.treeAddress = idx_tree;
+            adrs.treeAddress = bytes12(uint96(idx_tree));
             node = Xmss_pkFromSig(
                 params,
                 idx_leaf,
@@ -316,12 +402,15 @@ contract SPHINCSPlus {
     ) internal view returns (bytes memory) {
         // Set address type to WOTS_HASH and set key pair address
         adrs.adrsType = 0; // Assuming 0 is the address type for WOTS_HASH
-        adrs.keyPairAddress = idx;
+        // adrs.keyPairAddress = idx;
+        adrs.keyPairAddress = bytes4(uint32(idx)); 
+        bytes memory sig = SIG_XMSS.wotsSig;
+        bytes memory auth = SIG_XMSS.auth;
 
         // Compute WOTS+ pk from WOTS+ sig
         bytes memory node0 = WOTS_pkFromSig(
             params,
-            SIG_XMSS.wotsSig,
+            sig,
             M,
             PKseed,
             adrs
@@ -329,38 +418,65 @@ contract SPHINCSPlus {
         bytes memory node1;
 
         // Set address type to TREE and set tree index
-        adrs.adrsType = 1; // Assuming 1 is the address type for TREE
-        adrs.treeIndex = idx;
+        adrs.adrsType = bytes4(uint32(1)); // Assuming 1 is the address type for TREE
+        adrs.treeIndex = bytes4(idx);
 
         // Compute root from WOTS+ pk and AUTH
         for (uint k = 0; k < params.Hprime; k++) {
-            adrs.treeHeight = k + 1;
+            // adrs.treeHeight = k + 1;
+            adrs.treeHeight = bytes4(uint32(k + 1));
             if ((idx / (2 ** k)) % 2 == 0) {
-                adrs.treeIndex = adrs.treeIndex / 2;
+                // adrs.treeIndex = adrs.treeIndex / 2;
+                adrs.treeIndex = bytes4(uint32(uint32(adrs.treeIndex) / 2));
 
-                node1 = utils.sha256ToBytes(
-                    sha256(
-                        abi.encodePacked(
-                            PKseed,
-                            utils.adrsToBytes(adrs),
-                            node0,
-                            utils.slice(SIG_XMSS.auth, k * params.N, params.N)
-                        )
-                    )
+                bytes memory bytesToHash = new bytes(params.N + node0.length);
+
+                // Copy AUTH[k*params.N:(k+1)*params.N] to the beginning of bytesToHash
+                for (uint i = 0; i < params.N; i++) {
+                    bytesToHash[i] = auth[k * params.N + i];
+                }
+
+                // Copy node0 to the end of bytesToHash
+                for (uint i = 0; i < node0.length; i++) {
+                    bytesToHash[params.N + i] = node0[i];
+                }
+
+                node1 = tweakableHashFunction.H(
+                    PKseed,
+                    adrs,
+                    bytesToHash
                 );
             } else {
-                adrs.treeIndex = (adrs.treeIndex - 1) / 2;
+                adrs.treeIndex = bytes4(uint32((uint32(adrs.treeIndex) - 1) / 2));
+                // adrs.treeIndex = (adrs.treeIndex - 1) / 2;
 
-                node1 = utils.sha256ToBytes(
-                    sha256(
-                        abi.encodePacked(
-                            PKseed,
-                            utils.adrsToBytes(adrs),
-                            utils.slice(SIG_XMSS.auth, k * params.N, params.N),
-                            node0
-                        )
-                    )
+                bytes memory bytesToHash = new bytes(params.N + node0.length);
+
+                for (uint i = 0; i < params.N; i++) {
+                    bytesToHash[i] = auth[k * params.N + i];
+                }
+
+                // Copy node0 to the end of bytesToHash
+                for (uint i = 0; i < node0.length; i++) {
+                    bytesToHash[params.N + i] = node0[i];
+                }
+
+                node1 = tweakableHashFunction.H(
+                    PKseed,
+                    adrs,
+                    bytesToHash
                 );
+
+                // node1 = utils.sha256ToBytes(
+                //     sha256(
+                //         abi.encodePacked(
+                //             PKseed,
+                //             utils.adrsToBytes(adrs),
+                //             utils.slice(SIG_XMSS.auth, k * params.N, params.N),
+                //             node0
+                //         )
+                //     )
+                // );
             }
             node0 = node1;
         }
@@ -397,7 +513,7 @@ contract SPHINCSPlus {
         bytes memory tmp = new bytes(params.Len * params.N);
 
         for (uint256 i = 0; i < params.Len; i++) {
-            adrs.chainAddress = uint32(i);
+            adrs.chainAddress = bytes4(uint32(i));
             bytes memory result = utils.chain(
                 params,
                 utils.slice(signature, i * params.N, params.N),
@@ -411,7 +527,7 @@ contract SPHINCSPlus {
             }
         }
 
-        wotspkADRS.adrsType = 2; // Assuming 2 is the address type for WOTS_PK
+        wotspkADRS.adrsType = bytes4(uint32(2)); // Assuming 2 is the address type for WOTS_PK
         wotspkADRS.keyPairAddress = adrs.keyPairAddress;
 
         return utils.T_l(PKseed, wotspkADRS, tmp);

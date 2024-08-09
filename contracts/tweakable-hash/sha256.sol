@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {ITweakableHashFunction} from "./itweakable.sol";
 import {SPHINCSPlus} from "../sphincsplus.sol";
 import {Utils} from "../utils.sol";
 
 contract SHA256Tweak {
     Utils utils;
 
-    constructor() {
-        utils = new Utils();
+    constructor(address _utils) {
+        utils = Utils(_utils);
     }
 
     struct Sha256Tweak {
@@ -111,44 +112,88 @@ contract SHA256Tweak {
     function compressADRS(
         SPHINCSPlus.ADRS memory adrs
     ) public pure returns (bytes memory) {
-        bytes memory ADRSc = new bytes(22);
+        bytes memory ADRSc = new bytes(32);
 
-        ADRSc[0] = bytes1(uint8(adrs.layerAddress >> 24));
-        ADRSc[1] = bytes1(uint8(adrs.layerAddress >> 16));
-        ADRSc[2] = bytes1(uint8(adrs.layerAddress >> 8));
-        ADRSc[3] = bytes1(uint8(adrs.layerAddress));
+        ADRSc[0] = adrs.layerAddress[0];
+        ADRSc[1] = adrs.layerAddress[1];
+        ADRSc[2] = adrs.layerAddress[2];
+        ADRSc[3] = adrs.layerAddress[3];
 
-        for (uint i = 0; i < 8; i++) {
-            ADRSc[4 + i] = bytes1(uint8(adrs.treeAddress >> (56 - 8 * i)));
+        for (uint i = 0; i < 12; i++) {
+            ADRSc[4 + i] = adrs.treeAddress[i];
         }
 
-        ADRSc[12] = bytes1(uint8(adrs.adrsType >> 24));
-        ADRSc[13] = bytes1(uint8(adrs.adrsType >> 16));
-        ADRSc[14] = bytes1(uint8(adrs.adrsType >> 8));
-        ADRSc[15] = bytes1(uint8(adrs.adrsType));
+        ADRSc[16] = adrs.adrsType[0];
+        ADRSc[17] = adrs.adrsType[1];
+        ADRSc[18] = adrs.adrsType[2];
+        ADRSc[19] = adrs.adrsType[3];
 
-        if (adrs.adrsType == 0) {
-            for (uint i = 0; i < 4; i++) {
-                ADRSc[16 + i] = bytes1(
-                    uint8(adrs.keyPairAddress >> (24 - 8 * i))
-                );
-            }
-            for (uint i = 0; i < 4; i++) {
-                ADRSc[20 + i] = bytes1(
-                    uint8(adrs.chainAddress >> (24 - 8 * i))
-                );
-            }
-        } else if (adrs.adrsType == 1) {
-            for (uint i = 0; i < 4; i++) {
-                ADRSc[16 + i] = bytes1(uint8(adrs.treeHeight >> (24 - 8 * i)));
-            }
-            for (uint i = 0; i < 4; i++) {
-                ADRSc[20 + i] = bytes1(uint8(adrs.treeIndex >> (24 - 8 * i)));
-            }
+        if (adrs.adrsType == bytes4(0)) {
+            ADRSc[20] = adrs.keyPairAddress[0];
+            ADRSc[21] = adrs.keyPairAddress[1];
+            ADRSc[22] = adrs.keyPairAddress[2];
+            ADRSc[23] = adrs.keyPairAddress[3];
+
+            ADRSc[24] = adrs.chainAddress[0];
+            ADRSc[25] = adrs.chainAddress[1];
+            ADRSc[26] = adrs.chainAddress[2];
+            ADRSc[27] = adrs.chainAddress[3];
+        } else if (adrs.adrsType == bytes4(uint32(1))) {
+            ADRSc[20] = adrs.treeHeight[0];
+            ADRSc[21] = adrs.treeHeight[1];
+            ADRSc[22] = adrs.treeHeight[2];
+            ADRSc[23] = adrs.treeHeight[3];
+
+            ADRSc[24] = adrs.treeIndex[0];
+            ADRSc[25] = adrs.treeIndex[1];
+            ADRSc[26] = adrs.treeIndex[2];
+            ADRSc[27] = adrs.treeIndex[3];
         }
 
         return ADRSc;
     }
+
+    // function compressADRS(
+    //     SPHINCSPlus.ADRS memory adrs
+    // ) public pure returns (bytes memory) {
+    //     bytes memory ADRSc = new bytes(22);
+
+    //     ADRSc[0] = bytes1(uint8(adrs.layerAddress >> 24));
+    //     ADRSc[1] = bytes1(uint8(adrs.layerAddress >> 16));
+    //     ADRSc[2] = bytes1(uint8(adrs.layerAddress >> 8));
+    //     ADRSc[3] = bytes1(uint8(adrs.layerAddress));
+
+    //     for (uint i = 0; i < 8; i++) {
+    //         ADRSc[4 + i] = bytes1(uint8(adrs.treeAddress >> (56 - 8 * i)));
+    //     }
+
+    //     ADRSc[12] = bytes1(uint8(adrs.adrsType >> 24));
+    //     ADRSc[13] = bytes1(uint8(adrs.adrsType >> 16));
+    //     ADRSc[14] = bytes1(uint8(adrs.adrsType >> 8));
+    //     ADRSc[15] = bytes1(uint8(adrs.adrsType));
+
+    //     if (adrs.adrsType == 0) {
+    //         for (uint i = 0; i < 4; i++) {
+    //             ADRSc[16 + i] = bytes1(
+    //                 uint8(adrs.keyPairAddress >> (24 - 8 * i))
+    //             );
+    //         }
+    //         for (uint i = 0; i < 4; i++) {
+    //             ADRSc[20 + i] = bytes1(
+    //                 uint8(adrs.chainAddress >> (24 - 8 * i))
+    //             );
+    //         }
+    //     } else if (adrs.adrsType == 1) {
+    //         for (uint i = 0; i < 4; i++) {
+    //             ADRSc[16 + i] = bytes1(uint8(adrs.treeHeight >> (24 - 8 * i)));
+    //         }
+    //         for (uint i = 0; i < 4; i++) {
+    //             ADRSc[20 + i] = bytes1(uint8(adrs.treeIndex >> (24 - 8 * i)));
+    //         }
+    //     }
+
+    //     return ADRSc;
+    // }
 
     function mgf1sha256(
         bytes memory seed,

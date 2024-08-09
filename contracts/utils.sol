@@ -1,9 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {ITweakableHashFunction} from "./tweakable-hash/itweakable.sol";
 import {SPHINCSPlus} from "./sphincsplus.sol";
+import {SHA256Tweak} from "./tweakable-hash/sha256.sol";
 
 contract Utils {
+    ITweakableHashFunction tweakableHashFunction;
+
+    constructor() {
+        tweakableHashFunction = ITweakableHashFunction(address(new SHA256Tweak(address(this))));
+    }
+
+
     function Hmsg(
         bytes memory R,
         bytes memory PKseed,
@@ -113,44 +122,44 @@ contract Utils {
         return result;
     }
 
-    function adrsToBytes(
-        SPHINCSPlus.ADRS memory adrs
-    ) public pure returns (bytes memory) {
-        bytes memory result = new bytes(32);
-        // Fill in the bytes as per the ADRS structure fields
-        result[0] = bytes1(uint8(adrs.layerAddress >> 24));
-        result[1] = bytes1(uint8(adrs.layerAddress >> 16));
-        result[2] = bytes1(uint8(adrs.layerAddress >> 8));
-        result[3] = bytes1(uint8(adrs.layerAddress));
-        for (uint i = 0; i < 8; i++) {
-            result[4 + i] = bytes1(uint8(adrs.treeAddress >> (56 - 8 * i)));
-        }
-        result[12] = bytes1(uint8(adrs.adrsType >> 24));
-        result[13] = bytes1(uint8(adrs.adrsType >> 16));
-        result[14] = bytes1(uint8(adrs.adrsType >> 8));
-        result[15] = bytes1(uint8(adrs.adrsType));
-        result[16] = bytes1(uint8(adrs.keyPairAddress >> 24));
-        result[17] = bytes1(uint8(adrs.keyPairAddress >> 16));
-        result[18] = bytes1(uint8(adrs.keyPairAddress >> 8));
-        result[19] = bytes1(uint8(adrs.keyPairAddress));
-        result[20] = bytes1(uint8(adrs.chainAddress >> 24));
-        result[21] = bytes1(uint8(adrs.chainAddress >> 16));
-        result[22] = bytes1(uint8(adrs.chainAddress >> 8));
-        result[23] = bytes1(uint8(adrs.chainAddress));
-        result[24] = bytes1(uint8(adrs.hashAddress >> 24));
-        result[25] = bytes1(uint8(adrs.hashAddress >> 16));
-        result[26] = bytes1(uint8(adrs.hashAddress >> 8));
-        result[27] = bytes1(uint8(adrs.hashAddress));
-        result[28] = bytes1(uint8(adrs.treeHeight >> 24));
-        result[29] = bytes1(uint8(adrs.treeHeight >> 16));
-        result[30] = bytes1(uint8(adrs.treeHeight >> 8));
-        result[31] = bytes1(uint8(adrs.treeHeight));
-        result[32] = bytes1(uint8(adrs.treeIndex >> 24));
-        result[33] = bytes1(uint8(adrs.treeIndex >> 16));
-        result[34] = bytes1(uint8(adrs.treeIndex >> 8));
-        result[35] = bytes1(uint8(adrs.treeIndex));
-        return result;
-    }
+    // function adrsToBytes(
+    //     SPHINCSPlus.ADRS memory adrs
+    // ) public pure returns (bytes memory) {
+    //     bytes memory result = new bytes(32);
+    //     // Fill in the bytes as per the ADRS structure fields
+    //     result[0] = bytes1(uint8(adrs.layerAddress >> 24));
+    //     result[1] = bytes1(uint8(adrs.layerAddress >> 16));
+    //     result[2] = bytes1(uint8(adrs.layerAddress >> 8));
+    //     result[3] = bytes1(uint8(adrs.layerAddress));
+    //     for (uint i = 0; i < 8; i++) {
+    //         result[4 + i] = bytes1(uint8(adrs.treeAddress >> (56 - 8 * i)));
+    //     }
+    //     result[12] = bytes1(uint8(adrs.adrsType >> 24));
+    //     result[13] = bytes1(uint8(adrs.adrsType >> 16));
+    //     result[14] = bytes1(uint8(adrs.adrsType >> 8));
+    //     result[15] = bytes1(uint8(adrs.adrsType));
+    //     result[16] = bytes1(uint8(adrs.keyPairAddress >> 24));
+    //     result[17] = bytes1(uint8(adrs.keyPairAddress >> 16));
+    //     result[18] = bytes1(uint8(adrs.keyPairAddress >> 8));
+    //     result[19] = bytes1(uint8(adrs.keyPairAddress));
+    //     result[20] = bytes1(uint8(adrs.chainAddress >> 24));
+    //     result[21] = bytes1(uint8(adrs.chainAddress >> 16));
+    //     result[22] = bytes1(uint8(adrs.chainAddress >> 8));
+    //     result[23] = bytes1(uint8(adrs.chainAddress));
+    //     result[24] = bytes1(uint8(adrs.hashAddress >> 24));
+    //     result[25] = bytes1(uint8(adrs.hashAddress >> 16));
+    //     result[26] = bytes1(uint8(adrs.hashAddress >> 8));
+    //     result[27] = bytes1(uint8(adrs.hashAddress));
+    //     result[28] = bytes1(uint8(adrs.treeHeight >> 24));
+    //     result[29] = bytes1(uint8(adrs.treeHeight >> 16));
+    //     result[30] = bytes1(uint8(adrs.treeHeight >> 8));
+    //     result[31] = bytes1(uint8(adrs.treeHeight));
+    //     result[32] = bytes1(uint8(adrs.treeIndex >> 24));
+    //     result[33] = bytes1(uint8(adrs.treeIndex >> 16));
+    //     result[34] = bytes1(uint8(adrs.treeIndex >> 8));
+    //     result[35] = bytes1(uint8(adrs.treeIndex));
+    //     return result;
+    // }
 
     function chain(
         SPHINCSPlus.Parameters memory params,
@@ -159,14 +168,12 @@ contract Utils {
         uint8 steps,
         bytes memory PKseed,
         SPHINCSPlus.ADRS memory adrs
-    ) public pure returns (bytes memory) {
+    ) public view returns (bytes memory) {
         bytes memory result = input;
 
         for (uint8 i = start; i < (start + steps) && i < params.W; i++) {
-            adrs.hashAddress = uint32(i);
-            result = sha256ToBytes(
-                sha256(abi.encodePacked(PKseed, adrsToBytes(adrs), result))
-            );
+            adrs.hashAddress = bytes4(uint32(i));
+            result = tweakableHashFunction.H(PKseed, adrs, result);
         }
 
         return result;
@@ -176,10 +183,7 @@ contract Utils {
         bytes memory PKseed,
         SPHINCSPlus.ADRS memory adrs,
         bytes memory tmp
-    ) public pure returns (bytes memory) {
-        return
-            sha256ToBytes(
-                sha256(abi.encodePacked(PKseed, adrsToBytes(adrs), tmp))
-            );
+    ) public view returns (bytes memory) {
+        return tweakableHashFunction.H(PKseed, adrs, tmp);
     }
 }

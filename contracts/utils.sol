@@ -7,11 +7,8 @@ import {SPHINCSPlus} from "./sphincsplus.sol";
 import {SHA256Tweak} from "./tweakable-hash/sha256.sol";
 
 contract Utils {
-    SpxParameters spxParams;
 
-    constructor(address _spxParams) {
-        spxParams = SpxParameters(_spxParams);
-    }
+    constructor() {}
 
     function slice(
         bytes memory data,
@@ -74,6 +71,7 @@ contract Utils {
         }
         return result;
     }
+
     function log2(uint256 x) public pure returns (uint256) {
         uint256 result = 0;
         while (x > 1) {

@@ -4,7 +4,54 @@ pragma solidity ^0.8.0;
 import {SPHINCSPlus} from "../sphincsplus.sol";
 import {Utils} from "../utils.sol";
 import {SpxParameters} from "../parameters.sol";
-import {ITweakableHashFunction} from "./itweakable.sol";
+// import {ITweakableHashFunction} from "./itweakable.sol";
+
+interface ITweakableHashFunction {
+    function Hmsg(
+        bytes memory R,
+        bytes memory PKseed,
+        bytes memory PKroot,
+        bytes memory M
+    ) external view returns (bytes memory);
+
+    function PRF(
+        bytes memory SEED,
+        SPHINCSPlus.ADRS memory adrs
+    ) external view returns (bytes memory);
+
+    function PRFmsg(
+        bytes memory SKprf,
+        bytes memory OptRand,
+        bytes memory M
+    ) external view returns (bytes memory);
+
+    function F(
+        bytes memory PKseed,
+        SPHINCSPlus.ADRS memory adrs,
+        bytes memory tmp
+    ) external view returns (bytes memory);
+
+    function H(
+        bytes memory PKseed,
+        SPHINCSPlus.ADRS memory adrs,
+        bytes memory tmp
+    ) external view returns (bytes memory);
+
+    function T_l(
+        bytes memory PKseed,
+        SPHINCSPlus.ADRS memory adrs,
+        bytes memory tmp
+    ) external view returns (bytes memory);
+
+    function chain(
+        SpxParameters.Parameters memory params,
+        bytes memory input,
+        uint8 start,
+        uint8 steps,
+        bytes memory PKseed,
+        SPHINCSPlus.ADRS memory adrs
+    ) external view returns (bytes memory); 
+}
 
 contract SHA256Tweak is ITweakableHashFunction {  
     Utils utils;
@@ -16,8 +63,8 @@ contract SHA256Tweak is ITweakableHashFunction {
         uint256 N;
     }
 
-    constructor(address _utils, string memory variant, uint256 m, uint256 n) {
-        utils = Utils(_utils);
+    constructor(string memory variant, uint256 m, uint256 n) {
+        utils = new Utils();
         tweakParams = TweakParams(variant, m, n);
     }
 
@@ -26,7 +73,7 @@ contract SHA256Tweak is ITweakableHashFunction {
         bytes memory PKseed,
         bytes memory PKroot,
         bytes memory M
-    ) external pure returns (bytes memory) {
+    ) external view override returns (bytes memory) {
         bytes32 hash = sha256(abi.encodePacked(R, PKseed, PKroot, M));
         bytes memory bitmask = mgf1sha256(
             abi.encodePacked(hash),
@@ -38,7 +85,7 @@ contract SHA256Tweak is ITweakableHashFunction {
     function PRF(
         bytes memory SEED,
         SPHINCSPlus.ADRS memory adrs
-    ) external pure returns (bytes memory) {
+    ) external pure override returns (bytes memory) {
         bytes memory compressedADRS = compressADRS(adrs);
         return abi.encodePacked(sha256(abi.encodePacked(SEED, compressedADRS)));
     }
@@ -47,7 +94,7 @@ contract SHA256Tweak is ITweakableHashFunction {
         bytes memory SKprf,
         bytes memory OptRand,
         bytes memory M
-    ) external pure returns (bytes memory) {
+    ) external view override returns (bytes memory) {
         bytes memory hmacResult = hmacSha256(
             SKprf,
             abi.encodePacked(OptRand, M)
@@ -59,7 +106,7 @@ contract SHA256Tweak is ITweakableHashFunction {
         bytes memory PKseed,
         SPHINCSPlus.ADRS memory adrs,
         bytes memory tmp
-    ) external pure returns (bytes memory) {
+    ) external view override returns (bytes memory) {
         bytes memory compressedADRS = compressADRS(adrs);
         bytes memory M1;
 
@@ -84,7 +131,7 @@ contract SHA256Tweak is ITweakableHashFunction {
         bytes memory PKseed,
         SPHINCSPlus.ADRS memory adrs,
         bytes memory tmp
-    ) external pure returns (bytes memory) {
+    ) external view override returns (bytes memory) {
         return this.F(PKseed, adrs, tmp);
     }
 
@@ -92,7 +139,7 @@ contract SHA256Tweak is ITweakableHashFunction {
         bytes memory PKseed,
         SPHINCSPlus.ADRS memory adrs,
         bytes memory tmp
-    ) external pure returns (bytes memory) {
+    ) external view override returns (bytes memory) {
         return this.F(PKseed, adrs, tmp);
     }
 
@@ -197,7 +244,7 @@ contract SHA256Tweak is ITweakableHashFunction {
         uint8 steps,
         bytes memory PKseed,
         SPHINCSPlus.ADRS memory adrs
-    ) external view returns (bytes memory) {
+    ) external view override returns (bytes memory) {
         bytes memory result = input;
 
         for (uint8 i = start; i < (start + steps) && i < params.W; i++) {

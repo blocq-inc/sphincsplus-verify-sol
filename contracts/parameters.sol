@@ -9,8 +9,8 @@ import {SHA256Tweak} from "./tweakable-hash/sha256.sol";
 contract SpxParameters {
     Utils utils;
 
-    constructor(address _utils) {
-        utils = Utils(_utils);
+    constructor() {
+        utils = new Utils();
     }
 
     struct Parameters {
@@ -24,7 +24,8 @@ contract SpxParameters {
         uint256 Hprime;
         uint256 A;
         bool RANDOMIZE;
-        ITweakableHashFunction Tweak; 
+        // TODO: ITweakableHashFunction Tweak;
+        address Tweak; 
         uint256 Len1;
         uint256 Len2;
         uint256 Len;
@@ -51,7 +52,7 @@ contract SpxParameters {
         uint256 logt,
         string memory hashFunc,
         bool RANDOMIZE
-    ) public pure returns (Parameters memory) {
+    ) public returns (Parameters memory) {
         Parameters memory params;
         params.N = n;
         params.W = w;
@@ -72,22 +73,23 @@ contract SpxParameters {
         uint256 idx_leaf_len = (h / d + 7) / 8;
         uint256 m = md_len + idx_tree_len + idx_leaf_len;
 
-        if (keccak256(abi.encodePacked(hashFunc)) == keccak256(abi.encodePacked("SHA256-robust"))) {
-            params.Tweak = new SHA256Tweak(address(utils), "Robust", m, n);
-        } else if (keccak256(abi.encodePacked(hashFunc)) == keccak256(abi.encodePacked("SHA256-simple"))) {
-            params.Tweak = new SHA256Tweak(address(utils), "Simple", m, n);
+        // if (keccak256(abi.encodePacked(hashFunc)) == keccak256(abi.encodePacked("SHA256-robust"))) {
+        //     params.Tweak = new SHA256Tweak("Robust", m, n);
+        // } else if (keccak256(abi.encodePacked(hashFunc)) == keccak256(abi.encodePacked("SHA256-simple"))) {
+        //     params.Tweak = new SHA256Tweak("Simple", m, n);
         // TODO: Add SHAKE256 variants later
         // } else if (keccak256(abi.encodePacked(hashFunc)) == keccak256(abi.encodePacked("SHAKE256-robust"))) {
         //     params.Tweak = Shake256Tweak("Robust", m, n);
         // } else if (keccak256(abi.encodePacked(hashFunc)) == keccak256(abi.encodePacked("SHAKE256-simple"))) {
         //     params.Tweak = Shake256Tweak("Robust", m, n);
         // } else {
-            params.Tweak = new SHA256Tweak(address(utils), "Simple", m, n); // Default to SHA256-simple
-        }
+        // address tweak = address(new SHA256Tweak("Simple", m, n));
+        params.Tweak = address(new SHA256Tweak("Simple", m, n)); // Default to SHA256-simple
+        // }
         return params;
     }
 
-    function MakeSphincsPlusSHA256256sSimple(bool RANDOMIZE) public pure returns (Parameters memory) {
+    function MakeSphincsPlusSHA256256sSimple(bool RANDOMIZE) public returns (Parameters memory) {
         return MakeSphincsPlus(32, 16, 64, 8, 22, 14, "SHA256-simple", RANDOMIZE);
     }
     // TODO:Other MakeSphincsPlus variants...

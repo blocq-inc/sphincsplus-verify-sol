@@ -11,12 +11,11 @@ contract SPHINCSPlusVerifier {
     SPHINCSPlus sphincsPlus;
     Utils utils;
     SpxParameters spxParams;
-    SHA256Tweak sha256Tweak;
 
     constructor() {
-        spxParams = new SpxParameters(address(utils));
-        utils = new Utils(address(spxParams));
-        sha256Tweak = new SHA256Tweak(address(utils), "SHA256", 32, 32);
+        sphincsPlus = new SPHINCSPlus();
+        spxParams = new SpxParameters();
+        utils = new Utils();
     }
 
     // TODO: params should bytes for all args
@@ -58,8 +57,8 @@ contract SPHINCSPlusVerifier {
         bytes memory message,
         SPHINCSPlus.SPHINCS_SIG memory sig,
         SPHINCSPlus.SPHINCS_PK memory pk
-    ) public view returns (bool) {
-        SpxParameters params = spxParams.MakeSphincsPlusSHA256256sSimple(false);
+    ) public returns (bool) {
+        SpxParameters.Parameters memory params = spxParams.MakeSphincsPlusSHA256256sSimple(false);
 
         SPHINCSPlus.VerificationParams memory vParams = SPHINCSPlus
             .VerificationParams({params: params, M: message, SIG: sig, PK: pk});

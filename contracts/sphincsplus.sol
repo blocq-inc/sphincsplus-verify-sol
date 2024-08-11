@@ -9,13 +9,18 @@ import "hardhat/console.sol";
 
 contract SPHINCSPlus {
     Utils utils;
-    ITweakableHashFunction tweakableHashFunction;
+    // ITweakableHashFunction tweakableHashFunction;
     SpxParameters spxParams;
 
-    constructor(address _tweakableHashFunction, address _utils, address _spxParams) {
-        utils = Utils(_utils);
-        tweakableHashFunction = ITweakableHashFunction(_tweakableHashFunction);
-        spxParams = SpxParameters(_spxParams);
+    // constructor(address _tweakableHashFunction, address _utils, address _spxParams) {
+    //     utils = Utils(_utils);
+    //     tweakableHashFunction = ITweakableHashFunction(_tweakableHashFunction);
+    //     spxParams = SpxParameters(_spxParams);
+    // }
+
+    constructor() {
+        utils = new Utils();
+        spxParams = new SpxParameters();
     }
 
     struct SPHINCS_PK {
@@ -88,7 +93,7 @@ contract SPHINCSPlus {
         bytes memory M,
         SpxParameters.Parameters memory params
     ) internal view returns (bytes memory, IndexResult memory) {
-        bytes memory digest = tweakableHashFunction.Hmsg(R, PKseed, PKroot, M);
+        bytes memory digest = ITweakableHashFunction(params.Tweak).Hmsg(R, PKseed, PKroot, M);
 
         uint tmp_md_bytes = (params.K * params.A + 7) / 8;
         uint tmp_idx_tree_bytes = (params.H - params.H / params.D + 7) / 8;
@@ -209,7 +214,7 @@ contract SPHINCSPlus {
             adrs.treeIndex = bytes4(uint32(i * params.T + indices[i]));
 
             console.log("Fors_pkFromSig:before F");
-            node0 = tweakableHashFunction.F(PKseed, adrs, node0);
+            node0 = ITweakableHashFunction(params.Tweak).F(PKseed, adrs, node0);
             console.log("Fors_pkFromSig:after F");
 
             bytes memory auth = sig.AUTH[i];
@@ -234,7 +239,7 @@ contract SPHINCSPlus {
                         bytesToHash[params.N + i] = node0[i];
                     }
                     // node1 = tweakableHashFunction.H(PKseed, adrs, abi.encodePacked(node0, auth[j * params.N:(j + 1) * params.N]));
-                    node1 = tweakableHashFunction.H(PKseed, adrs, bytesToHash);
+                    node1 = ITweakableHashFunction(params.Tweak).H(PKseed, adrs, bytesToHash);
                 } else {
                     adrs.treeIndex = bytes4(uint32((uint32(adrs.treeIndex) - 1) / 2));
 
@@ -249,7 +254,7 @@ contract SPHINCSPlus {
                     for (uint l = 0; l < node0.length; l++) {
                         bytesToHash[params.N + i] = node0[i];
                     }
-                    node1 = tweakableHashFunction.H(PKseed, adrs, bytesToHash);
+                    node1 = ITweakableHashFunction(params.Tweak).H(PKseed, adrs, bytesToHash);
                 }
 
                 node0 = node1;
@@ -266,7 +271,7 @@ contract SPHINCSPlus {
         adrs.keyPairAddress = adrs.keyPairAddress;
 
         console.log("Fors_pkFromSig:T_l");
-        return tweakableHashFunction.T_l(PKseed, adrs, root);
+        return ITweakableHashFunction(params.Tweak).T_l(PKseed, adrs, root);
     }
 
     function Ht_verify(
@@ -368,7 +373,7 @@ contract SPHINCSPlus {
                     bytesToHash[params.N + i] = node0[i];
                 }
 
-                node1 = tweakableHashFunction.H(
+                node1 = ITweakableHashFunction(params.Tweak).H(
                     PKseed,
                     adrs,
                     bytesToHash
@@ -388,7 +393,7 @@ contract SPHINCSPlus {
                     bytesToHash[params.N + i] = node0[i];
                 }
 
-                node1 = tweakableHashFunction.H(
+                node1 = ITweakableHashFunction(params.Tweak).H(
                     PKseed,
                     adrs,
                     bytesToHash
@@ -441,7 +446,7 @@ contract SPHINCSPlus {
 
         for (uint256 i = 0; i < params.Len; i++) {
             adrs.chainAddress = bytes4(uint32(i));
-            bytes memory result = tweakableHashFunction.chain(
+            bytes memory result = ITweakableHashFunction(params.Tweak).chain(
                 params,
                 utils.slice(signature, i * params.N, params.N),
                 uint8(_msg[i]),
@@ -457,6 +462,6 @@ contract SPHINCSPlus {
         wotspkADRS.adrsType = bytes4(uint32(2)); // Assuming 2 is the address type for WOTS_PK
         wotspkADRS.keyPairAddress = adrs.keyPairAddress;
 
-        return tweakableHashFunction.T_l(PKseed, wotspkADRS, tmp);
+        return ITweakableHashFunction(params.Tweak).T_l(PKseed, wotspkADRS, tmp);
     }
 }

@@ -5,8 +5,10 @@ pragma solidity ^0.8.0;
 import {ITweakableHashFunction} from "./tweakable-hash/itweakable.sol";
 import {Utils} from "./utils.sol";
 import {SHA256Tweak} from "./tweakable-hash/sha256.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract SpxParameters {
+    using Math for uint256;
     Utils utils;
 
     constructor(address _utils) {
@@ -64,13 +66,13 @@ contract SpxParameters {
         params.T = 1 << logt;
         params.A = logt;
         params.RANDOMIZE = RANDOMIZE;
-        params.Len1 = (8 * n + utils.log2(w) - 1) / utils.log2(w); // Ceil operation
-        params.Len2 = (utils.log2(params.Len1 * (w - 1)) + utils.log2(w) - 1) / utils.log2(w) + 1; // Floor operation
+        params.Len1 = (8 * n + Math.log2(w) - 1) / Math.log2(w); // Ceil operation
+        params.Len2 = (Math.log2(params.Len1 * (w - 1)) + Math.log2(w) - 1) / Math.log2(w) + 1; // Floor operation
         params.Len = params.Len1 + params.Len2;
 
-        uint256 md_len = (params.K * logt + 7) / 8;
-        uint256 idx_tree_len = (h - h / d + 7) / 8;
-        uint256 idx_leaf_len = (h / d + 7) / 8;
+        uint256 md_len = Math.ceilDiv(params.K * logt, 8);
+        uint256 idx_tree_len = Math.ceilDiv(h - h / d, 8);
+        uint256 idx_leaf_len = Math.ceilDiv(h / d, 8);
         uint256 m = md_len + idx_tree_len + idx_leaf_len;
 
         // if (keccak256(abi.encodePacked(hashFunc)) == keccak256(abi.encodePacked("SHA256-robust"))) {
@@ -91,6 +93,10 @@ contract SpxParameters {
 
     function MakeSphincsPlusSHA256256sSimple(bool RANDOMIZE) public returns (Parameters memory) {
         return MakeSphincsPlus(32, 16, 64, 8, 22, 14, "SHA256-simple", RANDOMIZE);
+    }
+
+    function MakeSphincsPlusSHA256128sSimple(bool RANDOMIZE) public returns (Parameters memory) {
+        return MakeSphincsPlus(16, 16, 63, 7, 14, 12, "SHA256-simple", RANDOMIZE);
     }
     // TODO:Other MakeSphincsPlus variants...
     // function MakeSphincsPlusSHA256256fRobust(bool RANDOMIZE) public pure returns (Parameters memory) {

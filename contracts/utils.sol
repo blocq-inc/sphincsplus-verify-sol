@@ -19,6 +19,25 @@ contract Utils {
         return result;
     }
 
+    function appendBytes(
+        bytes memory original,
+        bytes memory toAppend
+    ) public pure returns (bytes memory) {
+        bytes memory result = new bytes(original.length + toAppend.length);
+
+        // Copy the original array
+        for (uint256 i = 0; i < original.length; i++) {
+            result[i] = original[i];
+        }
+
+        // Append the new bytes
+        for (uint256 i = 0; i < toAppend.length; i++) {
+            result[original.length + i] = toAppend[i];
+        }
+
+        return result;
+    }
+
     function base_w(
         bytes memory input,
         uint256 w,

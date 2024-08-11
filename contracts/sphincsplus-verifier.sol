@@ -58,12 +58,11 @@ contract SPHINCSPlusVerifier {
         SPHINCSPlus.SPHINCS_SIG memory sig,
         SPHINCSPlus.SPHINCS_PK memory pk
     ) public returns (bool) {
-        SpxParameters.Parameters memory params = spxParams.MakeSphincsPlusSHA256256sSimple(false);
+        SpxParameters.Parameters memory params = spxParams.MakeSphincsPlusSHA256128sSimple(false);
 
         SPHINCSPlus.VerificationParams memory vParams = SPHINCSPlus
             .VerificationParams({params: params, M: message, SIG: sig, PK: pk});
 
-        console.log("verify");
         return sphincsPlus.Spx_verify(vParams);
     }
 }

@@ -482,22 +482,24 @@ contract SPHINCSPlus {
         // console.log(tmp.length);
         console.log("WOTS_pkFromSig:before for loop");
         // console.log(params.Len);
-        for (uint256 i = 0; i < params.Len; i++) {
-            console.log("WOTS_pkFromSig:in for loop");
-            adrs.chainAddress = bytes4(uint32(i));
-            bytes memory result = ITweakableHashFunction(params.Tweak).chain(
-                params,
-                utils.slice(signature, i * params.N, params.N),
-                uint8(_msg[i]),
-                uint8(params.W - 1 - uint8(_msg[i])),
-                PKseed,
-                adrs
-            );
-            // console.log("WOTS_pkFromSig:after chain");
-            for (uint256 j = 0; j < params.N; j++) {
-                tmp[i * params.N + j] = result[j];
-            }
-        }
+
+        // TODO: remove commnet out
+        // for (uint256 i = 0; i < params.Len; i++) {
+        //     console.log("WOTS_pkFromSig:in for loop");
+        //     adrs.chainAddress = bytes4(uint32(i));
+        //     bytes memory result = ITweakableHashFunction(params.Tweak).chain(
+        //         params,
+        //         utils.slice(signature, i * params.N, params.N),
+        //         uint8(_msg[i]),
+        //         uint8(params.W - 1 - uint8(_msg[i])),
+        //         PKseed,
+        //         adrs
+        //     );
+        //     // console.log("WOTS_pkFromSig:after chain");
+        //     // for (uint256 j = 0; j < params.N; j++) {
+        //     //     tmp[i * params.N + j] = result[j];
+        //     // }
+        // }
 
         console.log("WOTS_pkFromSig:after loo1");
 

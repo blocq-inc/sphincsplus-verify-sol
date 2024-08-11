@@ -9,18 +9,11 @@ import "hardhat/console.sol";
 
 contract SPHINCSPlus {
     Utils utils;
-    // ITweakableHashFunction tweakableHashFunction;
     SpxParameters spxParams;
 
-    // constructor(address _tweakableHashFunction, address _utils, address _spxParams) {
-    //     utils = Utils(_utils);
-    //     tweakableHashFunction = ITweakableHashFunction(_tweakableHashFunction);
-    //     spxParams = SpxParameters(_spxParams);
-    // }
-
-    constructor() {
-        utils = new Utils();
-        spxParams = new SpxParameters();
+    constructor(address _utils, address _spxParams) {
+        utils = Utils(_utils);
+        spxParams = SpxParameters(_spxParams);
     }
 
     struct SPHINCS_PK {

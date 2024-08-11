@@ -12,10 +12,10 @@ contract SPHINCSPlusVerifier {
     Utils utils;
     SpxParameters spxParams;
 
-    constructor() {
-        sphincsPlus = new SPHINCSPlus();
-        spxParams = new SpxParameters();
-        utils = new Utils();
+    constructor(address _utils, address _spxParams, address _sphincsPlus) {
+        sphincsPlus = SPHINCSPlus(_sphincsPlus); 
+        spxParams = SpxParameters(_spxParams);
+        utils = Utils(_utils);
     }
 
     // TODO: params should bytes for all args

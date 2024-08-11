@@ -7,9 +7,6 @@ import {SPHINCSPlus} from "./sphincsplus.sol";
 import {SHA256Tweak} from "./tweakable-hash/sha256.sol";
 
 contract Utils {
-
-    constructor() {}
-
     function slice(
         bytes memory data,
         uint start,

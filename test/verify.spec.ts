@@ -126,10 +126,23 @@ async function deploySPHINCSPlusVerifierFixture() {
   // Contracts are deployed using the first signer/account by default
   const [owner, otherAccount] = await hre.ethers.getSigners();
 
-  const SPHINCSPlusVerifier = await hre.ethers.getContractFactory(
+  const _utils = await hre.ethers.getContractFactory("Utils");
+  const _spxParams = await hre.ethers.getContractFactory("SpxParameters");
+  const _sphincsPlus = await hre.ethers.getContractFactory("SPHINCSPlus");
+  const _spxVerifier = await hre.ethers.getContractFactory(
     "SPHINCSPlusVerifier"
   );
-  const verifier = await SPHINCSPlusVerifier.deploy();
+  const utils = await _utils.deploy();
+  const spxParams = await _spxParams.deploy(await utils.getAddress());
+  const sphincsplus = await _sphincsPlus.deploy(
+    await utils.getAddress(),
+    await spxParams.getAddress()
+  );
+  const verifier = await _spxVerifier.deploy(
+    await utils.getAddress(),
+    await spxParams.getAddress(),
+    await sphincsplus.getAddress()
+  );
 
   return { verifier, owner, otherAccount };
 }

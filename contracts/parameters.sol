@@ -9,8 +9,8 @@ import {SHA256Tweak} from "./tweakable-hash/sha256.sol";
 contract SpxParameters {
     Utils utils;
 
-    constructor() {
-        utils = new Utils();
+    constructor(address _utils) {
+        utils = Utils(_utils);
     }
 
     struct Parameters {

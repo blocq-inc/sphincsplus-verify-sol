@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {SPHINCSPlus} from "../sphincsplus.sol";
 import {Utils} from "../utils.sol";
 import {SpxParameters} from "../parameters.sol";
-// import {ITweakableHashFunction} from "./itweakable.sol";
+import "hardhat/console.sol";
 
 interface ITweakableHashFunction {
     function Hmsg(
@@ -107,6 +107,7 @@ contract SHA256Tweak is ITweakableHashFunction {
         SPHINCSPlus.ADRS memory adrs,
         bytes memory tmp
     ) external view override returns (bytes memory) {
+        console.log("F:start");
         bytes memory compressedADRS = compressADRS(adrs);
         bytes memory M1;
 
@@ -124,6 +125,7 @@ contract SHA256Tweak is ITweakableHashFunction {
         bytes32 hashValue = sha256(
             abi.encodePacked(PKseed, padding, compressedADRS, M1)
         );
+        console.log("F:end");
         return abi.encodePacked(hashValue);
     }
 
@@ -246,6 +248,8 @@ contract SHA256Tweak is ITweakableHashFunction {
         SPHINCSPlus.ADRS memory adrs
     ) external view override returns (bytes memory) {
         bytes memory result = input;
+
+        console.log("chain:start");
 
         for (uint8 i = start; i < (start + steps) && i < params.W; i++) {
             adrs.hashAddress = bytes4(uint32(i));
